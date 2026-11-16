@@ -1,8 +1,21 @@
 {
     "common": {
         "name": "satellite-display",
-        "version": "0.3.1",
+        "version": "0.3.2",
         "news": {
+            "0.3.2": {
+                "en": "A removed or renamed satellite or tablet keeps states that carry settings of other adapters (History, InfluxDB, SQL) and warns in the log. The API encryption key is hidden in the settings.",
+                "de": "Ein entfernter oder umbenannter Satellit oder Tablet behält Datenpunkte mit Einstellungen anderer Adapter (History, InfluxDB, SQL) und warnt im Log. Der API-Schlüssel wird in den Einstellungen verdeckt angezeigt.",
+                "ru": "Удалённый или переименованный сателлит или планшет сохраняет состояния с настройками других адаптеров (History, InfluxDB, SQL) и предупреждает об этом в логе. Ключ шифрования API в настройках скрыт.",
+                "pt": "Um satélite ou tablet removido ou renomeado mantém os estados com definições de outros adaptadores (History, InfluxDB, SQL) e avisa no registo. A chave de encriptação da API fica oculta nas definições.",
+                "nl": "Een verwijderde of hernoemde satelliet of tablet behoudt states met instellingen van andere adapters (History, InfluxDB, SQL) en waarschuwt in het log. De API-sleutel is in de instellingen verborgen.",
+                "fr": "Un satellite ou une tablette supprimé ou renommé conserve les états portant des réglages d'autres adaptateurs (History, InfluxDB, SQL) et avertit dans le journal. La clé de chiffrement de l'API est masquée dans les réglages.",
+                "it": "Un satellite o tablet rimosso o rinominato mantiene gli stati con impostazioni di altri adattatori (History, InfluxDB, SQL) e avvisa nel log. La chiave di crittografia dell'API è nascosta nelle impostazioni.",
+                "es": "Un satélite o tableta eliminado o renombrado conserva los estados con ajustes de otros adaptadores (History, InfluxDB, SQL) y avisa en el registro. La clave de cifrado de la API queda oculta en los ajustes.",
+                "pl": "Usunięty lub przemianowany satelita albo tablet zachowuje stany z ustawieniami innych adapterów (History, InfluxDB, SQL) i ostrzega w logu. Klucz szyfrowania API jest ukryty w ustawieniach.",
+                "uk": "Видалений або перейменований сателіт чи планшет зберігає стани з налаштуваннями інших адаптерів (History, InfluxDB, SQL) і попереджає про це в журналі. Ключ шифрування API у налаштуваннях приховано.",
+                "zh-cn": "删除或重命名的卫星或平板会保留带有其他适配器设置（History、InfluxDB、SQL）的状态，并在日志中发出警告。设置中的 API 加密密钥已隐藏。"
+            },
             "0.3.1": {
                 "en": "Tablets can show a clock with the date when idle (tab Tablets: on/off and minutes); a touch shows the keypad of the screen lock or the tiles. The tile editor draws a tablet exactly as the tablet shows it. Tab Authentication describes the screen lock of the tablets.",
                 "de": "Tablets können im Ruhezustand eine Uhr mit Datum zeigen (Reiter Tablets: an/aus und Minuten); eine Berührung zeigt das Ziffernfeld der Bildschirmsperre oder die Kacheln. Der Kachel-Editor zeichnet ein Tablet genau so, wie das Tablet es zeigt. Der Reiter Authentifizierung beschreibt die Bildschirmsperre der Tablets.",
@@ -80,19 +93,6 @@
                 "pl": "Panel kafelków bez głosu (Waveshare ESP32-S3-Touch-LCD-2): stan brightness, np. dla trybu nocnego ze skryptu",
                 "uk": "Панель плиток без голосу (Waveshare ESP32-S3-Touch-LCD-2): стан brightness, наприклад для нічного режиму зі скрипта",
                 "zh-cn": "无语音的磁贴面板（Waveshare ESP32-S3-Touch-LCD-2）：状态 brightness，例如用脚本实现夜间模式"
-            },
-            "0.1.0": {
-                "en": "Screen lock with a PIN: only the clock until the PIN is typed, no wake word; tab Authentication decides when it locks again (satellite firmware 2.1.0)",
-                "de": "Bildschirmsperre mit PIN: nur die Uhr bis zur Eingabe der PIN, kein Aktivierungswort; der Reiter Authentifizierung legt fest, wann wieder gesperrt wird (Satelliten-Firmware 2.1.0)",
-                "ru": "Блокировка экрана с PIN: только часы до ввода PIN, слово активации не работает; вкладка Аутентификация задаёт, когда блокировать снова (прошивка сателлита 2.1.0)",
-                "pt": "Bloqueio do ecrã com PIN: só o relógio até introduzir o PIN, sem palavra de ativação; o separador Autenticação define quando volta a bloquear (firmware do satélite 2.1.0)",
-                "nl": "Schermvergrendeling met pincode: alleen de klok tot de pincode is ingevoerd, geen activeringswoord; het tabblad Authenticatie bepaalt wanneer opnieuw wordt vergrendeld (satellietfirmware 2.1.0)",
-                "fr": "Verrouillage de l'écran par code PIN : seulement l'horloge jusqu'à la saisie du code, pas de mot d'activation ; l'onglet Authentification décide quand il se verrouille de nouveau (firmware du satellite 2.1.0)",
-                "it": "Blocco schermo con PIN: solo l'orologio finché non si inserisce il PIN, nessuna parola di attivazione; la scheda Autenticazione decide quando si blocca di nuovo (firmware del satellite 2.1.0)",
-                "es": "Bloqueo de pantalla con PIN: solo el reloj hasta introducir el PIN, sin palabra de activación; la pestaña Autenticación decide cuándo se vuelve a bloquear (firmware del satélite 2.1.0)",
-                "pl": "Blokada ekranu z PIN: tylko zegar do wpisania PIN, bez słowa aktywującego; zakładka Uwierzytelnianie określa, kiedy blokować ponownie (firmware satelity 2.1.0)",
-                "uk": "Блокування екрана з PIN: лише годинник до введення PIN, без слова активації; вкладка Автентифікація визначає, коли блокувати знову (прошивка сателіта 2.1.0)",
-                "zh-cn": "带 PIN 的屏幕锁：输入 PIN 前只显示时钟，不响应唤醒词；在“身份验证”选项卡中设置何时再次锁定（卫星固件 2.1.0）"
             }
         },
         "titleLang": {

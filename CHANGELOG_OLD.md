@@ -2,6 +2,11 @@
 
 Versions that no longer fit into the changelog of the [README](README.md) (it keeps the last five) are moved here.
 
+### 0.1.2 (2026-11-10)
+
+- `media.url` plays only an `http://` or `https://` address; an empty value or `stop` (as other players of ioBroker
+  take it, e.g. ioBroker.spotify-connect) stops the player
+
 ### 0.1.1 (2026-11-10)
 
 - The tile panel without voice (Waveshare ESP32-S3-Touch-LCD-2, `panel-lcd2.yaml` of the firmware) works as a

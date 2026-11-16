@@ -17,6 +17,7 @@ const { decideTls } = require('./lib/tls');
 const { checkTcpPort, registerTcpPort } = require('./lib/used-resources');
 const { normalizeDisplays, normalizeTiles, idOf, colorOf, pageTitlesOf } = require('./lib/layout');
 const { findRenames, renameTiles, renamePageTitles } = require('./lib/renames');
+const { planRemoval } = require('./lib/cleanup');
 const { NAMES } = require('./lib/names');
 const { EDIT_COMMANDS, runCommand } = require('./lib/commands');
 const {
@@ -255,7 +256,7 @@ class SatelliteDisplay extends utils.Adapter {
                     });
                 }
             }
-            await this.delObjectAsync(`${folder}.${r.fromId}`, { recursive: true });
+            await this.removeObjects(`${folder}.${r.fromId}`, `${r.from} was renamed`);
         }
         const { tiles, changed } = renameTiles(/** @type {Record<string, unknown>[]} */ (this.config.tiles), renames);
         const titles = renamePageTitles(this.config.pageTitles, renames);
@@ -274,7 +275,34 @@ class SatelliteDisplay extends utils.Adapter {
     /** The PWA is off or no tablet is left: the objects of the tablets go, with their access keys. */
     async removeTabletObjects() {
         if (await this.getObjectAsync('tablets')) {
-            await this.delObjectAsync('tablets', { recursive: true });
+            await this.removeObjects('tablets', 'the tablets are off');
+        }
+    }
+
+    /**
+     * Removes an object with everything below it, but keeps states with settings of other adapters in common.custom
+     * (History, InfluxDB, SQL ...) and the folders above them, with a warning (lib/cleanup.js).
+     *
+     * @param {string} id - Id in the namespace of the adapter
+     * @param {string} reason - Why it goes, for the warning
+     */
+    async removeObjects(id, reason) {
+        const rootId = id.startsWith(`${this.namespace}.`) ? id : `${this.namespace}.${id}`;
+        const objects = { ...(await this.getForeignObjectsAsync(`${rootId}.*`)) };
+        const root = await this.getForeignObjectAsync(rootId);
+        if (root) {
+            objects[rootId] = root;
+        }
+        const { remove, keep } = planRemoval(rootId, objects);
+        if (!keep.length) {
+            await this.delForeignObjectAsync(rootId, { recursive: true });
+            return;
+        }
+        this.log.warn(
+            `${reason}, but ${keep.join(', ')} ${keep.length === 1 ? 'has' : 'have'} settings of other adapters (History, InfluxDB, SQL ...): kept. Remove those settings and delete the objects by hand when they are no longer needed`,
+        );
+        for (const objId of remove) {
+            await this.delForeignObjectAsync(objId);
         }
     }
 
@@ -490,7 +518,7 @@ class SatelliteDisplay extends utils.Adapter {
                 // the lock is off: its states go
                 for (const s of ['locked', 'failedPins']) {
                     if (await this.getObjectAsync(`${base}.${s}`)) {
-                        await this.delObjectAsync(`${base}.${s}`);
+                        await this.removeObjects(`${base}.${s}`, 'the screen lock is off');
                     }
                 }
             }
@@ -499,7 +527,7 @@ class SatelliteDisplay extends utils.Adapter {
         const devices = await this.getDevicesAsync();
         for (const dev of devices) {
             if (this.isDisplayState(dev._id) && !keep.has(dev._id)) {
-                await this.delObjectAsync(dev._id, { recursive: true });
+                await this.removeObjects(dev._id, `${dev._id} is no longer in the settings`);
             }
         }
     }

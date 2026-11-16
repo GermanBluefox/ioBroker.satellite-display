@@ -218,6 +218,10 @@ again by itself.
 - The icons are a fixed set built into the firmware; the settings offer exactly that list.
 - The web app of the tablets draws the same icons from [Material Design Icons](https://pictogrammers.com) 7.4.47
   (Apache License 2.0), generated into `www/icons.js` by `tools/build-icons.js`.
+- A satellite or tablet that is removed or renamed in the settings takes its objects along, except states that carry
+  settings of other adapters (History, InfluxDB, SQL ...): those stay with the folders above them, and the log names
+  them. Remove those settings and delete the objects by hand when the data is no longer needed. The same holds for
+  `locked` and `failedPins` when the screen lock is switched off, and for `tablets.*` when the web app is off.
 - After an update of the adapter, reload the admin page (F5) once: an open admin keeps the old tile editor in memory.
 
 ## Changelog
@@ -228,6 +232,14 @@ Older changes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### 0.3.2 (2026-11-16)
+
+- (sadam6752-tech) Objects of a removed or renamed satellite or tablet, of the tablets when the web app is off and of
+  the screen lock when it is off are no longer deleted when they carry settings of other adapters (History, InfluxDB,
+  SQL): they stay with a warning in the log (review of the repository PR)
+- (sadam6752-tech) The API encryption key of a satellite is hidden in the settings (with a button to show it)
+- (sadam6752-tech) `@iobroker/testing` 6.3.2
 
 ### 0.3.1 (2026-11-14)
 
@@ -261,11 +273,6 @@ Older changes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
 
 - Commands for AI agents such as ioBroker.pi-agent (sendTo): `help`, `getTiles`, `addTile`, `updateTile`, `moveTile`,
   `removeTile`; a tile without a place goes to the first free cell, and the answers say what to ask the user
-
-### 0.1.2 (2026-11-10)
-
-- `media.url` plays only an `http://` or `https://` address; an empty value or `stop` (as other players of ioBroker
-  take it, e.g. ioBroker.spotify-connect) stops the player
 
 ## License
 
