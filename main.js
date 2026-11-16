@@ -18,6 +18,7 @@ const { checkTcpPort, registerTcpPort } = require('./lib/used-resources');
 const { normalizeDisplays, normalizeTiles, idOf, colorOf, pageTitlesOf } = require('./lib/layout');
 const { findRenames, renameTiles, renamePageTitles } = require('./lib/renames');
 const { planRemoval } = require('./lib/cleanup');
+const { SatelliteDeviceManagement } = require('./lib/device-management');
 const { NAMES } = require('./lib/names');
 const { EDIT_COMMANDS, runCommand } = require('./lib/commands');
 const {
@@ -100,6 +101,8 @@ class SatelliteDisplay extends utils.Adapter {
         this.pendingPageTitles = undefined;
         /** @type {ioBroker.Timeout | undefined} */
         this.saveTimer = undefined;
+        // the satellites and tablets in the Device Manager (tab Devices); it answers the dm:* messages itself
+        this.deviceManagement = new SatelliteDeviceManagement(this);
     }
 
     async onReady() {
@@ -617,8 +620,8 @@ class SatelliteDisplay extends utils.Adapter {
      * @param {ioBroker.Message} obj - Message
      */
     async onMessage(obj) {
-        if (!obj || typeof obj !== 'object' || !obj.command) {
-            return;
+        if (!obj || typeof obj !== 'object' || !obj.command || obj.command.startsWith('dm:')) {
+            return; // dm:* is answered by lib/device-management.js
         }
         const msg = /** @type {{satellite?: unknown, tiles?: unknown, pageTitles?: unknown}} */ (obj.message || {});
         const reply = (/** @type {Record<string, unknown>} */ answer) => {

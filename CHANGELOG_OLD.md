@@ -2,6 +2,11 @@
 
 Versions that no longer fit into the changelog of the [README](README.md) (it keeps the last five) are moved here.
 
+### 0.2.0 (2026-11-11)
+
+- Commands for AI agents such as ioBroker.pi-agent (sendTo): `help`, `getTiles`, `addTile`, `updateTile`, `moveTile`,
+  `removeTile`; a tile without a place goes to the first free cell, and the answers say what to ask the user
+
 ### 0.1.2 (2026-11-10)
 
 - `media.url` plays only an `http://` or `https://` address; an empty value or `stop` (as other players of ioBroker

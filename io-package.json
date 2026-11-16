@@ -1,8 +1,21 @@
 {
     "common": {
         "name": "satellite-display",
-        "version": "0.3.2",
+        "version": "0.4.0",
         "news": {
+            "0.4.0": {
+                "en": "New tab Devices with the Device Manager: every satellite and tablet as a card with its connection, screen lock, brightness and volume, \"send the tiles again\", and the link with the QR code of a tablet.",
+                "de": "Neuer Reiter Geräte mit dem Konfigurations-Manager: jeder Satellit und jedes Tablet als Karte mit Verbindung, Bildschirmsperre, Helligkeit und Lautstärke, „Kacheln erneut senden“ und dem Link mit QR-Code eines Tablets.",
+                "ru": "Новая вкладка «Устройства» с Device Manager: каждый сателлит и планшет как карточка со связью, блокировкой экрана, яркостью и громкостью, повторной отправкой плиток и ссылкой с QR-кодом планшета.",
+                "pt": "Novo separador Dispositivos com o Device Manager: cada satélite e tablet como um cartão com a ligação, bloqueio do ecrã, brilho e volume, \"reenviar os mosaicos\" e a ligação com o código QR de um tablet.",
+                "nl": "Nieuw tabblad Apparaten met de Device Manager: elke satelliet en tablet als kaart met verbinding, schermvergrendeling, helderheid en volume, \"tegels opnieuw verzenden\" en de link met QR-code van een tablet.",
+                "fr": "Nouvel onglet Appareils avec le Device Manager : chaque satellite et tablette sous forme de carte avec sa connexion, le verrouillage de l'écran, la luminosité et le volume, « renvoyer les tuiles » et le lien avec le code QR d'une tablette.",
+                "it": "Nuova scheda Dispositivi con il Device Manager: ogni satellite e tablet come scheda con connessione, blocco schermo, luminosità e volume, \"invia di nuovo i riquadri\" e il link con il codice QR di un tablet.",
+                "es": "Nueva pestaña Dispositivos con el Device Manager: cada satélite y tableta como una tarjeta con su conexión, bloqueo de pantalla, brillo y volumen, \"reenviar los mosaicos\" y el enlace con el código QR de una tableta.",
+                "pl": "Nowa karta Urządzenia z Device Managerem: każdy satelita i tablet jako karta z połączeniem, blokadą ekranu, jasnością i głośnością, „wyślij kafelki ponownie” oraz linkiem z kodem QR tabletu.",
+                "uk": "Нова вкладка «Пристрої» з Device Manager: кожен сателіт і планшет як картка зі зв’язком, блокуванням екрана, яскравістю й гучністю, повторним надсиланням плиток і посиланням із QR-кодом планшета.",
+                "zh-cn": "新增“设备”选项卡（设备管理器）：每个卫星和平板显示为一张卡片，包含连接状态、屏幕锁定、亮度和音量、“重新发送磁贴”，以及平板的链接和二维码。"
+            },
             "0.3.2": {
                 "en": "A removed or renamed satellite or tablet keeps states that carry settings of other adapters (History, InfluxDB, SQL) and warns in the log. The API encryption key is hidden in the settings.",
                 "de": "Ein entfernter oder umbenannter Satellit oder Tablet behält Datenpunkte mit Einstellungen anderer Adapter (History, InfluxDB, SQL) und warnt im Log. Der API-Schlüssel wird in den Einstellungen verdeckt angezeigt.",
@@ -80,19 +93,6 @@
                 "pl": "media.url odtwarza tylko adres http(s); pusta wartość lub \"stop\" (np. z ioBroker.spotify-connect) zatrzymuje odtwarzacz",
                 "uk": "media.url відтворює лише адресу http(s); порожнє значення або \"stop\" (наприклад, від ioBroker.spotify-connect) зупиняє програвач",
                 "zh-cn": "media.url 只播放 http(s) 地址；空值或 \"stop\"（例如来自 ioBroker.spotify-connect）会停止播放器"
-            },
-            "0.1.1": {
-                "en": "Tile panel without voice (Waveshare ESP32-S3-Touch-LCD-2): state brightness, e.g. for a night mode from a script",
-                "de": "Kachel-Panel ohne Sprache (Waveshare ESP32-S3-Touch-LCD-2): Datenpunkt brightness, z. B. für einen Nachtmodus per Skript",
-                "ru": "Панель плиток без голоса (Waveshare ESP32-S3-Touch-LCD-2): состояние brightness, например для ночного режима из скрипта",
-                "pt": "Painel de blocos sem voz (Waveshare ESP32-S3-Touch-LCD-2): estado brightness, p. ex. para um modo noturno por script",
-                "nl": "Tegelpaneel zonder spraak (Waveshare ESP32-S3-Touch-LCD-2): state brightness, bijv. voor een nachtmodus via een script",
-                "fr": "Panneau de tuiles sans voix (Waveshare ESP32-S3-Touch-LCD-2) : état brightness, p. ex. pour un mode nuit par script",
-                "it": "Pannello di riquadri senza voce (Waveshare ESP32-S3-Touch-LCD-2): stato brightness, ad es. per una modalità notte da script",
-                "es": "Panel de mosaicos sin voz (Waveshare ESP32-S3-Touch-LCD-2): estado brightness, p. ej. para un modo nocturno por script",
-                "pl": "Panel kafelków bez głosu (Waveshare ESP32-S3-Touch-LCD-2): stan brightness, np. dla trybu nocnego ze skryptu",
-                "uk": "Панель плиток без голосу (Waveshare ESP32-S3-Touch-LCD-2): стан brightness, наприклад для нічного режиму зі скрипта",
-                "zh-cn": "无语音的磁贴面板（Waveshare ESP32-S3-Touch-LCD-2）：状态 brightness，例如用脚本实现夜间模式"
             }
         },
         "titleLang": {
@@ -148,7 +148,10 @@
         "mode": "daemon",
         "type": "visualization",
         "compact": true,
-        "messagebox": true,
+        "supportedMessages": {
+            "custom": true,
+            "deviceManager": true
+        },
         "connectionType": "local",
         "dataSource": "push",
         "adminUI": {

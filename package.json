@@ -1,6 +1,6 @@
 {
   "name": "iobroker.satellite-display",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Tile pages on the touch display of ESPHome voice satellites: values, gauges, charts, switches, dimmers, buttons and thermostats bound to ioBroker states",
   "author": {
     "name": "sadam6752-tech",
@@ -29,6 +29,7 @@
   "dependencies": {
     "@2colors/esphome-native-api": "^1.3.7",
     "@iobroker/adapter-core": "^3.4.3",
+    "@iobroker/dm-utils": "^3.2.1",
     "ws": "^8.23.0"
   },
   "devDependencies": {

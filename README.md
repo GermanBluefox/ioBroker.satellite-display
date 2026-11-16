@@ -166,6 +166,20 @@ a tablet the same way, and `getTiles` names the grid of every display. The scree
   buttons or by an AI agent (`setPageTitle`). The bar of the tablet shows it next to the name of the tablet while that
   page is shown; the keypad of the screen lock shows only the name. Satellites have no place for it.
 
+## Devices (Device Manager)
+
+The tab **Devices** shows every satellite and tablet of the instance as a card of the ioBroker Device Manager
+(`@iobroker/dm-utils`); admin can also place the Device Manager in its left side bar. The settings stay in the tabs
+Satellites and Tablets: add, remove and rename displays there. The tab works while the instance runs.
+
+- **Card**: the connection (from `connected`), the address of a satellite, the kind of display.
+- **Controls** (the button with the sliders on the card), only what the display has: the screen lock (with a PIN), the
+  brightness of the display and the volume of the player.
+- **Actions**: "Send the tiles again" on every card; on a tablet, while the web app runs, "Link and QR code" and "New
+  link" (asks first; the old link stops working at once, also on the home screen of the tablet).
+- **Details** (menu of the card): grid and pages, the number of tiles, and the link with the QR code of a tablet.
+- **Links of the tablets** in the bar above the cards: the QR codes of all tablets in one dialog.
+
 ## Commands (e.g. for an AI agent)
 
 The tiles can also be changed with `sendTo('satellite-display.0', command, message)`, e.g. by ioBroker.pi-agent
@@ -233,6 +247,12 @@ Older changes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
     ### **WORK IN PROGRESS**
 -->
 
+### 0.4.0 (2026-11-16)
+
+- (sadam6752-tech) New tab Devices with the ioBroker Device Manager: every satellite and tablet as a card with its
+  connection, screen lock, brightness and volume, "Send the tiles again", and for a tablet the link with the QR code
+  and "New link"; the details show grid, pages and tiles, the bar above the cards the links of all tablets
+
 ### 0.3.2 (2026-11-16)
 
 - (sadam6752-tech) Objects of a removed or renamed satellite or tablet, of the tablets when the web app is off and of
@@ -268,11 +288,6 @@ Older changes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
   `announcing`, `idle`)
 - (sadam6752-tech) `satellites.<name>.connected` has the role `indicator.reachable`; the tile editor needs admin 8.0.0
   or newer
-
-### 0.2.0 (2026-11-11)
-
-- Commands for AI agents such as ioBroker.pi-agent (sendTo): `help`, `getTiles`, `addTile`, `updateTile`, `moveTile`,
-  `removeTile`; a tile without a place goes to the first free cell, and the answers say what to ask the user
 
 ## License
 
