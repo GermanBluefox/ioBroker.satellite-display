@@ -363,7 +363,7 @@ describe('tablets: TabletLink', () => {
             assert.ok(!link.has(name), name);
         }
         assert.ok(TABLET_ACTIONS.includes('lock_set'));
-        // the tile types of the firmware 2.3.0: a tablet always has them
+        // the tile types of the firmware 2.4.0: a tablet always has them
         for (const name of ['tile_item', 'tile_item_value', 'tile_item_text', 'tile_item_color']) {
             assert.ok(link.has(name), name);
         }

@@ -101,7 +101,7 @@
     "sd_soc_state": "Laadtoestand",
     "sd_power_state": "Vermogen (optioneel, positief = laden)",
     "sd_charging_state": "Laden (optioneel, gaat voor het vermogen)",
-    "sd_needs_new_firmware": "Vereist de satellietfirmware 2.3.0 of nieuwer; een oudere laat de tegel weg.",
+    "sd_needs_new_firmware": "Vereist de satellietfirmware 2.4.0 of nieuwer; een oudere laat de tegel weg.",
     "sd_kind_map": "Kaart (tablet)",
     "sd_kind_flow": "Energiestroom (tablet)",
     "sd_kind_trend": "Historiegrafiek (tablet)",

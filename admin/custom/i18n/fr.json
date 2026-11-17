@@ -101,7 +101,7 @@
     "sd_soc_state": "État de charge",
     "sd_power_state": "Puissance (facultatif, positive = en charge)",
     "sd_charging_state": "En charge (facultatif, prioritaire sur la puissance)",
-    "sd_needs_new_firmware": "Nécessite le firmware du satellite 2.3.0 ou plus récent ; un plus ancien omet la tuile.",
+    "sd_needs_new_firmware": "Nécessite le firmware du satellite 2.4.0 ou plus récent ; un plus ancien omet la tuile.",
     "sd_kind_map": "Carte (tablette)",
     "sd_kind_flow": "Flux d’énergie (tablette)",
     "sd_kind_trend": "Graphique d’historique (tablette)",

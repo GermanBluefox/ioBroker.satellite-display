@@ -149,7 +149,7 @@ export const TABLET_KINDS: Kind[] = ['map', 'flow', 'trend', 'camera'];
 /** The kinds with a title over their rows rather than a name of their own (lib/layout.js TITLE_TYPES) */
 export const TITLE_KINDS: Kind[] = ['group', 'flow', 'trend'];
 
-/** The kinds of the satellite firmware 2.3.0: an older one leaves them out (lib/layout.js ITEM_TYPES) */
+/** The kinds of the satellite firmware 2.4.0: an older one leaves them out (lib/layout.js ITEM_TYPES) */
 export const FIRMWARE_230_KINDS: Kind[] = ['group', 'level', 'battery', 'status'];
 
 /** Which of the states 2-5 a kind takes (lib/layout.js EXTRA_STATES) */

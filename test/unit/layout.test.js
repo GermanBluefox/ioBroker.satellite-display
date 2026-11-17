@@ -153,7 +153,7 @@ describe('layout', () => {
         assert.deepEqual([status.state2, status.state3, status.state4], ['', '', '']);
     });
 
-    it('gives the new types the sizes of the firmware 2.3.0', () => {
+    it('gives the new types the sizes of the firmware 2.4.0', () => {
         const problems = [];
         const sats = normalizeSatellites(SATS, problems);
         normalizeTiles([row({ type: 'level', size: 's' }), row({ col: 1, type: 'status', size: 'l' })], sats, problems);

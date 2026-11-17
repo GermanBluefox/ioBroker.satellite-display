@@ -226,7 +226,7 @@ const COLOR = {
     heatOn: '#4CAF50',
     heatOff: '#4B5563',
     alert: '#EF4444',
-    /** The fill of a battery (firmware 2.3.0) */
+    /** The fill of a battery (firmware 2.4.0) */
     battery: '#22C55E',
 };
 

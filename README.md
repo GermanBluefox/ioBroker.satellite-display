@@ -107,7 +107,7 @@ Details of the kinds:
   once by the step (0.5 unless set); one second after the last press the adapter writes it. The scale and the
   limits of the target come from the object of the target temperature (`min`/`max`), else 5-30. Needs the
   satellite firmware **2.0.1**; an older firmware is reported in the log and the tile is left out.
-- **Group, tank, battery, status:** need the satellite firmware **2.3.0**; an older firmware is reported in the log
+- **Group, tank, battery, status:** need the satellite firmware **2.4.0**; an older firmware is reported in the log
   and the tile is left out (a tablet always has them).
     - A group shows the states 1-4, each with its own name and unit (empty: those of the object) and the decimals of
       the tile; the title is an optional heading over the rows of a tall group. The thresholds colour each row.
@@ -310,7 +310,7 @@ Older changes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
 - (GermanBluefox) The web app of the tablets runs without a tablet entered too, so that one can pair itself
 - (GermanBluefox) The links and QR codes of the tablets name the LAN address of the host, no longer the first address of
   its list, which was the one of Tailscale (100.x) on a host with Tailscale
-- (GermanBluefox) Four new tile types, on the satellites (firmware 2.3.0) and the tablets: group (up to four values
+- (GermanBluefox) Four new tile types, on the satellites (firmware 2.4.0) and the tablets: group (up to four values
   in one tile), tank (fill level, optional litres), battery (charge, bolt while charging, optional power) and status
   (an icon that lights up while on); the tile editor draws them, the commands `addTile`/`updateTile` take them
 - (GermanBluefox) Tablet web app: the name of a value tile is no longer bold, and the toggle of a wide switch sits in
