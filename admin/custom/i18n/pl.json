@@ -101,5 +101,5 @@
     "sd_soc_state": "Stan naładowania",
     "sd_power_state": "Moc (opcjonalnie, dodatnia = ładowanie)",
     "sd_charging_state": "Ładowanie (opcjonalnie, ma pierwszeństwo przed mocą)",
-    "sd_needs_new_firmware": "Wymaga oprogramowania satelity 2.2.0 lub nowszego; starsze pominie kafelek."
+    "sd_needs_new_firmware": "Wymaga oprogramowania satelity 2.3.0 lub nowszego; starsze pominie kafelek."
 }

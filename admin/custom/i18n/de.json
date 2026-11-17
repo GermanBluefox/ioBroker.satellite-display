@@ -101,5 +101,5 @@
     "sd_soc_state": "Ladezustand",
     "sd_power_state": "Leistung (optional, lädt wenn positiv)",
     "sd_charging_state": "Lädt (optional, hat Vorrang vor der Leistung)",
-    "sd_needs_new_firmware": "Braucht die Satelliten-Firmware 2.2.0 oder neuer; eine ältere lässt die Kachel weg."
+    "sd_needs_new_firmware": "Braucht die Satelliten-Firmware 2.3.0 oder neuer; eine ältere lässt die Kachel weg."
 }

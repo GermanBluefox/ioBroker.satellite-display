@@ -535,7 +535,7 @@ input.level::-moz-range-thumb {
     display: none;
 }
 
-/* ---- status: read-only, its icon lights up while on (firmware 2.2.0) ---- */
+/* ---- status: read-only, its icon lights up while on (firmware 2.3.0) ---- */
 
 .tile.status .value {
     margin-top: auto;

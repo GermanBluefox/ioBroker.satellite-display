@@ -153,7 +153,7 @@ describe('layout', () => {
         assert.deepEqual([status.state2, status.state3, status.state4], ['', '', '']);
     });
 
-    it('gives the new types the sizes of the firmware 2.2.0', () => {
+    it('gives the new types the sizes of the firmware 2.3.0', () => {
         const problems = [];
         const sats = normalizeSatellites(SATS, problems);
         normalizeTiles([row({ type: 'level', size: 's' }), row({ col: 1, type: 'status', size: 'l' })], sats, problems);
@@ -338,7 +338,7 @@ describe('layout', () => {
         }
         const { ITEM_TYPES, EXTRA_STATES, ALERT_TYPES } = require('../../lib/layout');
         const quoted = list => list.map(k => `'${k}'`).join(', ');
-        assert.ok(block('FIRMWARE_220_KINDS').includes(`[${quoted(ITEM_TYPES)}]`), 'FIRMWARE_220_KINDS');
+        assert.ok(block('FIRMWARE_230_KINDS').includes(`[${quoted(ITEM_TYPES)}]`), 'FIRMWARE_230_KINDS');
         assert.ok(block('ALERT_KINDS').includes(`[${quoted(ALERT_TYPES)}]`), 'ALERT_KINDS');
         for (const [key, kinds] of Object.entries(EXTRA_STATES)) {
             assert.ok(block('EXTRA_STATES').includes(`${key}: [${quoted(kinds)}]`), key);

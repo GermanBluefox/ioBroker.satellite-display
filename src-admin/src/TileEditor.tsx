@@ -36,7 +36,7 @@ import { ConfigGeneric, type ConfigGenericProps, type ConfigGenericState } from 
 import {
     ALERT_KINDS,
     EXTRA_STATES,
-    FIRMWARE_220_KINDS,
+    FIRMWARE_230_KINDS,
     ICONS,
     KINDS,
     SATELLITE_GRID,
@@ -199,7 +199,7 @@ const COLOR = {
     heatOn: '#4CAF50',
     heatOff: '#4B5563',
     alert: '#EF4444',
-    /** The fill of a battery (firmware 2.2.0) */
+    /** The fill of a battery (firmware 2.3.0) */
     battery: '#22C55E',
 };
 
@@ -3023,7 +3023,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                     : t.type === 'battery'
                       ? 'sd_soc_state'
                       : 'sd_state';
-        const newKind = FIRMWARE_220_KINDS.includes(t.type);
+        const newKind = FIRMWARE_230_KINDS.includes(t.type);
         return (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minWidth: 260, maxWidth: 360, flex: 1 }}>
                 {problemOf(t, this.isTablet(t.satellite)) ? (

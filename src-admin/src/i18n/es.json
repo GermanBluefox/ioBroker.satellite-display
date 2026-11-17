@@ -101,5 +101,5 @@
     "sd_soc_state": "Estado de carga",
     "sd_power_state": "Potencia (opcional, positiva = cargando)",
     "sd_charging_state": "Cargando (opcional, tiene prioridad sobre la potencia)",
-    "sd_needs_new_firmware": "Requiere el firmware del satélite 2.2.0 o posterior; uno más antiguo omite el mosaico."
+    "sd_needs_new_firmware": "Requiere el firmware del satélite 2.3.0 o posterior; uno más antiguo omite el mosaico."
 }

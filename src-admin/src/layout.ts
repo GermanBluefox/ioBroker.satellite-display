@@ -128,8 +128,8 @@ export const KINDS: Record<Kind, Size[]> = {
     status: ['s', 'q', 'w'],
 };
 
-/** The kinds of the satellite firmware 2.2.0: an older one leaves them out (lib/layout.js ITEM_TYPES) */
-export const FIRMWARE_220_KINDS: Kind[] = ['group', 'level', 'battery', 'status'];
+/** The kinds of the satellite firmware 2.3.0: an older one leaves them out (lib/layout.js ITEM_TYPES) */
+export const FIRMWARE_230_KINDS: Kind[] = ['group', 'level', 'battery', 'status'];
 
 /** Which of the states 2-4 a kind takes (lib/layout.js EXTRA_STATES) */
 export const EXTRA_STATES: Record<'state2' | 'state3' | 'state4', Kind[]> = {

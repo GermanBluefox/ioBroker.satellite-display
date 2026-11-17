@@ -101,5 +101,5 @@
     "sd_soc_state": "电量",
     "sd_power_state": "功率（可选，正值表示充电）",
     "sd_charging_state": "充电中（可选，优先于功率）",
-    "sd_needs_new_firmware": "需要卫星固件 2.2.0 或更高版本；旧版本会略过此磁贴。"
+    "sd_needs_new_firmware": "需要卫星固件 2.3.0 或更高版本；旧版本会略过此磁贴。"
 }
