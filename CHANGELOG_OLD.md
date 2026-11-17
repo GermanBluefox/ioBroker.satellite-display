@@ -2,6 +2,15 @@
 
 Versions that no longer fit into the changelog of the [README](README.md) (it keeps the last five) are moved here.
 
+### 0.2.1 (2026-11-13)
+
+- (sadam6752-tech) A tile shows a state of a device only once it is confirmed (`ack`), never a command the device did
+  not carry out; states in `0_userdata.0` and of scripts show at once, since nobody confirms them
+- (sadam6752-tech) `media.state` has the values of its role: `play`, `pause`, `stop` (was `playing`, `paused`,
+  `announcing`, `idle`)
+- (sadam6752-tech) `satellites.<name>.connected` has the role `indicator.reachable`; the tile editor needs admin 8.0.0
+  or newer
+
 ### 0.2.0 (2026-11-11)
 
 - Commands for AI agents such as ioBroker.pi-agent (sendTo): `help`, `getTiles`, `addTile`, `updateTile`, `moveTile`,

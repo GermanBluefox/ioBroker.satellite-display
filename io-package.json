@@ -1,8 +1,21 @@
 {
     "common": {
         "name": "satellite-display",
-        "version": "0.4.0",
+        "version": "0.4.1",
         "news": {
+            "0.4.1": {
+                "en": "Pair a tablet by QR code with the ioBroker Visu app; new tiles group, tank, battery and status (satellite firmware 2.4.0); map, energy flow, history chart and camera tiles for tablets; tablet links name the LAN address of the host (by GermanBluefox)",
+                "de": "Tablet per QR-Code mit der ioBroker-Visu-App koppeln; neue Kacheln Gruppe, Tank, Batterie und Status (Satelliten-Firmware 2.4.0); Karte, Energiefluss, Verlaufsdiagramm und Kamera für Tablets; Tablet-Links nennen die LAN-Adresse des Hosts (von GermanBluefox)",
+                "ru": "Привязка планшета по QR-коду через приложение ioBroker Visu; новые плитки группа, бак, батарея и статус (прошивка сателлита 2.4.0); карта, поток энергии, график истории и камера для планшетов; ссылки планшетов указывают LAN-адрес хоста (от GermanBluefox)",
+                "pt": "Emparelhar um tablet por código QR com a app ioBroker Visu; novos mosaicos grupo, tanque, bateria e estado (firmware do satélite 2.4.0); mapa, fluxo de energia, gráfico de histórico e câmara para tablets; as ligações dos tablets indicam o endereço LAN do host (por GermanBluefox)",
+                "nl": "Tablet koppelen via QR-code met de ioBroker Visu-app; nieuwe tegels groep, tank, batterij en status (satellietfirmware 2.4.0); kaart, energiestroom, geschiedenisgrafiek en camera voor tablets; tabletlinks noemen het LAN-adres van de host (door GermanBluefox)",
+                "fr": "Appairer une tablette par code QR avec l'app ioBroker Visu ; nouvelles tuiles groupe, réservoir, batterie et état (firmware du satellite 2.4.0) ; carte, flux d'énergie, graphique d'historique et caméra pour tablettes ; les liens des tablettes indiquent l'adresse LAN de l'hôte (par GermanBluefox)",
+                "it": "Associare un tablet tramite codice QR con l'app ioBroker Visu; nuovi riquadri gruppo, serbatoio, batteria e stato (firmware del satellite 2.4.0); mappa, flusso di energia, grafico storico e telecamera per tablet; i link dei tablet indicano l'indirizzo LAN dell'host (di GermanBluefox)",
+                "es": "Emparejar una tableta por código QR con la app ioBroker Visu; nuevos mosaicos grupo, depósito, batería y estado (firmware del satélite 2.4.0); mapa, flujo de energía, gráfico de historial y cámara para tabletas; los enlaces de las tabletas indican la dirección LAN del host (por GermanBluefox)",
+                "pl": "Parowanie tabletu kodem QR w aplikacji ioBroker Visu; nowe kafelki grupa, zbiornik, bateria i status (oprogramowanie satelity 2.4.0); mapa, przepływ energii, wykres historii i kamera dla tabletów; linki tabletów podają adres LAN hosta (autor GermanBluefox)",
+                "uk": "Прив'язка планшета за QR-кодом через застосунок ioBroker Visu; нові плитки група, бак, батарея і статус (прошивка сателіта 2.4.0); мапа, потік енергії, графік історії та камера для планшетів; посилання планшетів вказують LAN-адресу хоста (від GermanBluefox)",
+                "zh-cn": "使用 ioBroker Visu 应用通过二维码配对平板；新增磁贴：组、水箱、电池和状态（卫星固件 2.4.0）；平板专用的地图、能量流、历史图表和摄像头磁贴；平板链接使用主机的局域网地址（由 GermanBluefox 提供）"
+            },
             "0.4.0": {
                 "en": "New tab Devices with the Device Manager: every satellite and tablet as a card with its connection, screen lock, brightness and volume, \"send the tiles again\", and the link with the QR code of a tablet.",
                 "de": "Neuer Reiter Geräte mit dem Konfigurations-Manager: jeder Satellit und jedes Tablet als Karte mit Verbindung, Bildschirmsperre, Helligkeit und Lautstärke, „Kacheln erneut senden“ und dem Link mit QR-Code eines Tablets.",
@@ -80,19 +93,6 @@
                 "pl": "Polecenia dla agentów AI (np. ioBroker.pi-agent): help, getTiles, addTile, updateTile, moveTile, removeTile",
                 "uk": "Команди для ШІ-агентів (наприклад, ioBroker.pi-agent): help, getTiles, addTile, updateTile, moveTile, removeTile",
                 "zh-cn": "供 AI 代理使用的命令（例如 ioBroker.pi-agent）：help、getTiles、addTile、updateTile、moveTile、removeTile"
-            },
-            "0.1.2": {
-                "en": "media.url plays only an http(s) address; an empty value or \"stop\" (e.g. from ioBroker.spotify-connect) stops the player",
-                "de": "media.url spielt nur eine http(s)-Adresse; ein leerer Wert oder \"stop\" (z. B. von ioBroker.spotify-connect) stoppt die Wiedergabe",
-                "ru": "media.url воспроизводит только адрес http(s); пустое значение или \"stop\" (например, от ioBroker.spotify-connect) останавливает плеер",
-                "pt": "media.url reproduz apenas um endereço http(s); um valor vazio ou \"stop\" (p. ex. do ioBroker.spotify-connect) para o leitor",
-                "nl": "media.url speelt alleen een http(s)-adres af; een lege waarde of \"stop\" (bijv. van ioBroker.spotify-connect) stopt de speler",
-                "fr": "media.url ne lit qu'une adresse http(s) ; une valeur vide ou « stop » (p. ex. de ioBroker.spotify-connect) arrête le lecteur",
-                "it": "media.url riproduce solo un indirizzo http(s); un valore vuoto o \"stop\" (ad es. da ioBroker.spotify-connect) ferma il lettore",
-                "es": "media.url solo reproduce una dirección http(s); un valor vacío o \"stop\" (p. ej. de ioBroker.spotify-connect) detiene el reproductor",
-                "pl": "media.url odtwarza tylko adres http(s); pusta wartość lub \"stop\" (np. z ioBroker.spotify-connect) zatrzymuje odtwarzacz",
-                "uk": "media.url відтворює лише адресу http(s); порожнє значення або \"stop\" (наприклад, від ioBroker.spotify-connect) зупиняє програвач",
-                "zh-cn": "media.url 只播放 http(s) 地址；空值或 \"stop\"（例如来自 ioBroker.spotify-connect）会停止播放器"
             }
         },
         "titleLang": {
