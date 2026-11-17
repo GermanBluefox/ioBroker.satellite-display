@@ -19,6 +19,18 @@
     const WAIT_MS = 60_000;
     /** Points a chart keeps */
     const CHART_POINTS = 60;
+    /** Icons of map, flow and camera beyond those of the firmware (Material Design Icons 7.4.47, Apache License 2.0) */
+    const EXTRA_ICONS = {
+        'transmission-tower':
+            'M8.28,5.45L6.5,4.55L7.76,2H16.23L17.5,4.55L15.72,5.44L15,4H9L8.28,5.45M18.62,8H14.09L13.3,5H10.7L9.91,8H5.38L4.1,10.55L5.89,11.44L6.62,10H17.38L18.1,11.45L19.89,10.56L18.62,8M17.77,22H15.7L15.46,21.1L12,15.9L8.53,21.1L8.3,22H6.23L9.12,11H11.19L10.83,12.35L12,14.1L13.16,12.35L12.81,11H14.88L17.77,22M11.4,15L10.5,13.65L9.32,18.13L11.4,15M14.68,18.12L13.5,13.64L12.6,15L14.68,18.12Z',
+        'home-lightning-bolt': 'M12 3L2 12H5V20H19V12H22L12 3M11.5 18V14H9L12.5 7V11H15L11.5 18Z',
+        'crosshairs-gps':
+            'M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z',
+        'camera-off':
+            'M1.2,4.47L2.5,3.2L20,20.72L18.73,22L16.73,20H4A2,2 0 0,1 2,18V6C2,5.78 2.04,5.57 2.1,5.37L1.2,4.47M7,4L9,2H15L17,4H20A2,2 0 0,1 22,6V18C22,18.6 21.74,19.13 21.32,19.5L16.33,14.5C16.76,13.77 17,12.91 17,12A5,5 0 0,0 12,7C11.09,7 10.23,7.24 9.5,7.67L5.82,4H7M7,12A5,5 0 0,0 12,17C12.5,17 13.03,16.92 13.5,16.77L11.72,15C10.29,14.85 9.15,13.71 9,12.28L7.23,10.5C7.08,10.97 7,11.5 7,12M12,9A3,3 0 0,1 15,12C15,12.35 14.94,12.69 14.83,13L11,9.17C11.31,9.06 11.65,9 12,9Z',
+        plus: 'M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z',
+        minus: 'M19,13H5V11H19V13Z',
+    };
 
     // ---- texts -------------------------------------------------------------------------------------------------
 
@@ -34,7 +46,14 @@
             wait: 'Too many wrong PINs, wait {s} s',
             empty: 'No tiles yet: add them in the tile editor of the adapter, or ask your AI agent.',
             lock: 'Lock',
+            page: 'Page {n}',
             replaced: 'This tablet is open in another window. Tap here to show it in this one.',
+            noPosition: 'No position',
+            noPicture: 'No picture',
+            solar: 'Solar',
+            battery: 'Battery',
+            grid: 'Grid',
+            use: 'Consumption',
         },
         de: {
             outdated:
@@ -47,7 +66,14 @@
             wait: 'Zu viele falsche PINs, warte {s} s',
             empty: 'Noch keine Kacheln: im Kachel-Editor des Adapters anlegen oder den KI-Agenten bitten.',
             lock: 'Sperren',
+            page: 'Seite {n}',
             replaced: 'Dieses Tablet ist in einem anderen Fenster geöffnet. Hier tippen, um es in diesem zu zeigen.',
+            noPosition: 'Keine Position',
+            noPicture: 'Kein Bild',
+            solar: 'Solar',
+            battery: 'Batterie',
+            grid: 'Netz',
+            use: 'Verbrauch',
         },
         ru: {
             outdated:
@@ -59,7 +85,14 @@
             wait: 'Слишком много неверных PIN, подождите {s} с',
             empty: 'Плиток пока нет: добавьте их в редакторе плиток адаптера или попросите ИИ-агента.',
             lock: 'Заблокировать',
+            page: 'Страница {n}',
             replaced: 'Этот планшет открыт в другом окне. Коснитесь здесь, чтобы показать его в этом.',
+            noPosition: 'Нет позиции',
+            noPicture: 'Нет изображения',
+            solar: 'Солнце',
+            battery: 'Батарея',
+            grid: 'Сеть',
+            use: 'Потребление',
         },
         pt: {
             outdated:
@@ -71,7 +104,14 @@
             wait: 'Demasiados PIN errados, aguarde {s} s',
             empty: 'Ainda sem mosaicos: adicione-os no editor de mosaicos do adaptador ou peça ao seu agente de IA.',
             lock: 'Bloquear',
+            page: 'Página {n}',
             replaced: 'Este tablet está aberto noutra janela. Toque aqui para o mostrar nesta.',
+            noPosition: 'Sem posição',
+            noPicture: 'Sem imagem',
+            solar: 'Solar',
+            battery: 'Bateria',
+            grid: 'Rede',
+            use: 'Consumo',
         },
         nl: {
             outdated:
@@ -83,7 +123,14 @@
             wait: 'Te veel verkeerde pincodes, wacht {s} s',
             empty: 'Nog geen tegels: voeg ze toe in de tegeleditor van de adapter of vraag het je AI-agent.',
             lock: 'Vergrendelen',
+            page: 'Pagina {n}',
             replaced: 'Deze tablet is in een ander venster geopend. Tik hier om hem in dit venster te tonen.',
+            noPosition: 'Geen positie',
+            noPicture: 'Geen beeld',
+            solar: 'Zon',
+            battery: 'Accu',
+            grid: 'Net',
+            use: 'Verbruik',
         },
         fr: {
             outdated:
@@ -96,7 +143,14 @@
             wait: 'Trop de PIN incorrects, attendez {s} s',
             empty: "Pas encore de tuiles : ajoutez-les dans l'éditeur de tuiles de l'adaptateur ou demandez à votre agent IA.",
             lock: 'Verrouiller',
+            page: 'Page {n}',
             replaced: 'Cette tablette est ouverte dans une autre fenêtre. Touchez ici pour l’afficher dans celle-ci.',
+            noPosition: 'Pas de position',
+            noPicture: 'Pas d’image',
+            solar: 'Solaire',
+            battery: 'Batterie',
+            grid: 'Réseau',
+            use: 'Consommation',
         },
         it: {
             outdated:
@@ -109,7 +163,14 @@
             wait: 'Troppi PIN errati, attendi {s} s',
             empty: "Ancora nessun riquadro: aggiungili nell'editor dei riquadri dell'adattatore o chiedi al tuo agente IA.",
             lock: 'Blocca',
+            page: 'Pagina {n}',
             replaced: 'Questo tablet è aperto in un’altra finestra. Tocca qui per mostrarlo in questa.',
+            noPosition: 'Nessuna posizione',
+            noPicture: 'Nessuna immagine',
+            solar: 'Solare',
+            battery: 'Batteria',
+            grid: 'Rete',
+            use: 'Consumo',
         },
         es: {
             outdated:
@@ -122,7 +183,14 @@
             wait: 'Demasiados PIN incorrectos, espera {s} s',
             empty: 'Aún no hay mosaicos: añádelos en el editor de mosaicos del adaptador o pídeselo a tu agente de IA.',
             lock: 'Bloquear',
+            page: 'Página {n}',
             replaced: 'Esta tableta está abierta en otra ventana. Toca aquí para mostrarla en esta.',
+            noPosition: 'Sin posición',
+            noPicture: 'Sin imagen',
+            solar: 'Solar',
+            battery: 'Batería',
+            grid: 'Red',
+            use: 'Consumo',
         },
         pl: {
             outdated:
@@ -134,7 +202,14 @@
             wait: 'Za dużo błędnych PIN-ów, poczekaj {s} s',
             empty: 'Brak kafelków: dodaj je w edytorze kafelków adaptera albo poproś agenta AI.',
             lock: 'Zablokuj',
+            page: 'Strona {n}',
             replaced: 'Ten tablet jest otwarty w innym oknie. Dotknij tutaj, aby pokazać go w tym.',
+            noPosition: 'Brak pozycji',
+            noPicture: 'Brak obrazu',
+            solar: 'Słońce',
+            battery: 'Bateria',
+            grid: 'Sieć',
+            use: 'Zużycie',
         },
         uk: {
             outdated:
@@ -146,7 +221,14 @@
             wait: 'Забагато неправильних PIN, зачекайте {s} с',
             empty: 'Плиток поки немає: додайте їх у редакторі плиток адаптера або попросіть ШІ-агента.',
             lock: 'Заблокувати',
+            page: 'Сторінка {n}',
             replaced: 'Цей планшет відкрито в іншому вікні. Торкніться тут, щоб показати його в цьому.',
+            noPosition: 'Немає позиції',
+            noPicture: 'Немає зображення',
+            solar: 'Сонце',
+            battery: 'Батарея',
+            grid: 'Мережа',
+            use: 'Споживання',
         },
         'zh-cn': {
             outdated:
@@ -158,7 +240,14 @@
             wait: 'PIN 错误次数过多，请等待 {s} 秒',
             empty: '还没有磁贴：在适配器的磁贴编辑器中添加，或请你的 AI 代理添加。',
             lock: '锁定',
+            page: '第 {n} 页',
             replaced: '此平板电脑已在另一个窗口中打开。点按此处在此窗口中显示。',
+            noPosition: '无位置',
+            noPicture: '无图像',
+            solar: '太阳能',
+            battery: '电池',
+            grid: '电网',
+            use: '用电',
         },
     };
     const lang = (() => {
@@ -284,7 +373,8 @@
      * @returns {SVGElement | null} The icon, null when unknown
      */
     function iconEl(name) {
-        const d = ICONS[String(name || '').replace(/^mdi:/, '')];
+        const key = String(name || '').replace(/^mdi:/, '');
+        const d = ICONS[key] || EXTRA_ICONS[key];
         if (!d) {
             return null;
         }
@@ -326,9 +416,9 @@
     /** @type {WebSocket | null} */
     let ws = null;
 
-    const SIZES = { s: [1, 1], q: [1, 2], w: [2, 1], l: [2, 2] };
-    /** The types with items (tile_item) */
-    const ITEM_TYPES = ['group', 'level', 'battery'];
+    const SIZES = { s: [1, 1], q: [1, 2], w: [2, 1], l: [2, 2], x: [3, 2], f: [4, 3] };
+    /** The types with items (tile_item): a flow has five (solar, battery, grid, consumption, charge) */
+    const ITEM_TYPES = ['group', 'level', 'battery', 'flow', 'trend'];
     const keyOf = (page, slot) => `${page}/${slot}`;
 
     /**
@@ -381,6 +471,12 @@
             pagesEl.scrollLeft = back * pagesEl.clientWidth;
         }
         drawTitle();
+        for (const tile of tiles.values()) {
+            if (tile.map) {
+                drawMapSoon(tile);
+            }
+        }
+        syncCameras();
     }
 
     /**
@@ -400,6 +496,8 @@
         const b = e.appendChild(el('div', `body${rowable ? ' rowable' : ''}`));
         tile.el = e;
         tile.parts = {};
+        tile.observer?.disconnect();
+        tile.observer = null;
 
         const head = el('div', 'head');
         const icon = iconEl(a.icon);
@@ -581,6 +679,85 @@
                 tile.parts.amount = readout.appendChild(el('div', 'amount'));
                 break;
             }
+            case 'map': {
+                // the map fills the tile; a head line only with a name (it then carries the speed)
+                b.classList.add('flush');
+                if (a.label || icon) {
+                    b.appendChild(head);
+                    tile.parts.speed = head.appendChild(el('span', 'speed hidden'));
+                }
+                b.appendChild(mapElement(tile));
+                break;
+            }
+            case 'flow': {
+                if (a.label || icon) {
+                    b.appendChild(head);
+                }
+                tile.parts.flow = b.appendChild(svg('svg', { class: 'flow' }));
+                tile.flowShape = '';
+                observeSize(tile, tile.parts.flow);
+                break;
+            }
+            case 'trend': {
+                const top = b.appendChild(el('div', 'head'));
+                if (icon) {
+                    top.appendChild(icon);
+                }
+                if (a.label) {
+                    top.appendChild(el('span', 'label', a.label));
+                }
+                tile.parts.legend = top.appendChild(el('span', 'legend'));
+                // the periods need two columns; the shortest only three
+                if (w >= 2) {
+                    const chips = top.appendChild(el('span', 'chips'));
+                    tile.parts.chips = PERIODS.filter(hours => hours > 1 || w >= 3).map(hours => {
+                        const chip = /** @type {HTMLButtonElement} */ (
+                            chips.appendChild(el('button', 'chip', periodText(hours)))
+                        );
+                        chip.type = 'button';
+                        chip.dataset.hours = String(hours);
+                        chip.addEventListener('click', ev => {
+                            ev.stopPropagation();
+                            setPeriod(tile, hours);
+                        });
+                        return chip;
+                    });
+                }
+                const canvas = /** @type {HTMLCanvasElement} */ (b.appendChild(el('canvas', 'trend')));
+                tile.parts.canvas = canvas;
+                const at = ev => {
+                    tile.cursorX = ev.clientX - canvas.getBoundingClientRect().left;
+                    drawTrend(tile);
+                };
+                canvas.addEventListener('pointerdown', ev => {
+                    capture(canvas, ev.pointerId);
+                    at(ev);
+                });
+                canvas.addEventListener('pointermove', ev => {
+                    if (tile.cursorX !== null) {
+                        at(ev);
+                    }
+                });
+                const off = () => {
+                    tile.cursorX = null;
+                    drawTrend(tile);
+                };
+                canvas.addEventListener('pointerup', off);
+                canvas.addEventListener('pointercancel', off);
+                observeSize(tile, canvas);
+                break;
+            }
+            case 'camera': {
+                // the picture fills the tile, a tap shows it on the whole screen
+                e.classList.add('touch');
+                b.classList.add('flush');
+                if (a.label || icon) {
+                    b.appendChild(head);
+                }
+                b.appendChild(cameraOf(tile).box);
+                e.addEventListener('click', () => openFull(tile));
+                break;
+            }
             default:
                 b.appendChild(head);
         }
@@ -758,6 +935,20 @@
             case 'group':
                 drawItems(tile);
                 break;
+            case 'map':
+                drawSpeed(tile);
+                drawMapSoon(tile);
+                break;
+            case 'flow':
+                drawFlow(tile);
+                break;
+            case 'trend':
+                drawLegend(tile);
+                drawTrend(tile);
+                break;
+            case 'camera':
+                drawCamera(tile);
+                break;
             case 'level':
             case 'battery': {
                 const v = tile.value;
@@ -818,6 +1009,7 @@
         if (name === 'tile_clear') {
             for (const [k, tile] of tiles) {
                 if (!d.page || tile.page === d.page) {
+                    disposeTile(tile);
                     tiles.delete(k);
                 }
             }
@@ -840,7 +1032,16 @@
                 points: [],
                 // rows of a group, the second amount of a level, the power of a battery (tile_item)
                 items: [],
+                // map, flow, trend, camera (tile_config); the series of a trend (tile_series) and its period
+                config: null,
+                series: [],
+                period: 24,
+                cursorX: null,
             };
+            const old = tiles.get(keyOf(d.page, d.slot));
+            if (old) {
+                disposeTile(old);
+            }
             tiles.set(keyOf(d.page, d.slot), tile);
             queueRender();
             return;
@@ -895,7 +1096,8 @@
                 break;
             case 'tile_item': {
                 const index = Number(d.index);
-                if (!ITEM_TYPES.includes(tile.args.type) || !Number.isInteger(index) || index < 0 || index > 3) {
+                const last = tile.args.type === 'flow' ? 4 : 3;
+                if (!ITEM_TYPES.includes(tile.args.type) || !Number.isInteger(index) || index < 0 || index > last) {
                     return;
                 }
                 tile.items[index] = {
@@ -918,6 +1120,14 @@
                 if (name === 'tile_item_value') {
                     item.value = Number(d.value);
                     item.text = undefined;
+                    if (tile.args.type === 'trend' && Number.isFinite(item.value)) {
+                        // a trend draws the values that come in after its history
+                        const points = tile.series[item.index] || (tile.series[item.index] = []);
+                        points.push([Date.now(), item.value]);
+                        if (points.length > LIVE_POINTS) {
+                            points.splice(0, points.length - LIVE_POINTS);
+                        }
+                    }
                 } else if (name === 'tile_item_text') {
                     item.text = String(d.value ?? '').slice(0, 32);
                 } else {
@@ -925,11 +1135,1447 @@
                 }
                 break;
             }
+            case 'tile_config': {
+                const config = d.config && typeof d.config === 'object' ? d.config : {};
+                const type = tile.args.type;
+                if (type === 'camera') {
+                    stopCamera(tile);
+                    tile.config = {
+                        src: String(config.src || ''),
+                        interval: Math.max(0, Math.min(3600, Number(config.interval) || 0)),
+                    };
+                    syncCameras();
+                } else {
+                    tile.config = config;
+                }
+                if (type === 'trend') {
+                    tile.period = PERIODS.includes(Number(config.hours)) ? Number(config.hours) : 24;
+                }
+                if (type === 'map' && !mapOf(tile).located) {
+                    mapOf(tile).zoom = MIN_ZOOM;
+                }
+                break;
+            }
+            case 'tile_position': {
+                const lat = numberOrNull(d.lat);
+                const lon = numberOrNull(d.lon);
+                if (tile.args.type !== 'map' || lat === null || lon === null) {
+                    return;
+                }
+                const m = mapOf(tile);
+                m.pos = { lat, lon, course: numberOrNull(d.course), speed: numberOrNull(d.speed) };
+                const end = m.track[m.track.length - 1];
+                if (!end || distanceM(end[0], end[1], lat, lon) >= TRACK_STEP_M) {
+                    m.track.push([lat, lon]);
+                    if (m.track.length > TRACK_MAX) {
+                        m.track.splice(0, m.track.length - TRACK_MAX);
+                    }
+                }
+                if (!m.located) {
+                    // the first position: the zoom of the tile, centred on the boat
+                    m.located = true;
+                    m.follow = true;
+                    m.zoom = clampZoom(Number(tile.config?.zoom) || 15);
+                }
+                if (m.follow) {
+                    m.center = { lat, lon };
+                }
+                break;
+            }
+            case 'tile_track':
+                if (tile.args.type !== 'map') {
+                    return;
+                }
+                mapOf(tile).track = (Array.isArray(d.points) ? d.points : [])
+                    .filter(p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
+                    .slice(-TRACK_MAX);
+                break;
+            case 'tile_targets':
+                if (tile.args.type !== 'map') {
+                    return;
+                }
+                mapOf(tile).targets = (Array.isArray(d.targets) ? d.targets : [])
+                    .filter(x => x && Number.isFinite(x.lat) && Number.isFinite(x.lon))
+                    .map(x => ({
+                        id: x.id,
+                        lat: x.lat,
+                        lon: x.lon,
+                        cog: numberOrNull(x.cog),
+                        name: String(x.name ?? '').slice(0, 24),
+                    }));
+                break;
+            case 'tile_anchor':
+                if (tile.args.type !== 'map') {
+                    return;
+                }
+                mapOf(tile).anchor =
+                    numberOrNull(d.lat) === null || numberOrNull(d.lon) === null
+                        ? null
+                        : { lat: Number(d.lat), lon: Number(d.lon), radius: numberOrNull(d.radius) || 50 };
+                break;
+            case 'tile_series': {
+                const index = Number(d.index);
+                if (tile.args.type !== 'trend' || !Number.isInteger(index) || index < 0 || index > 3) {
+                    return;
+                }
+                // an answer for a period no longer shown is too late
+                if (Number(d.hours) !== tile.period) {
+                    return;
+                }
+                tile.series[index] = (Array.isArray(d.points) ? d.points : []).filter(
+                    p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]),
+                );
+                break;
+            }
             default:
                 return;
         }
         update(tile);
     }
+
+    // ---- the tiles only a tablet draws: map, flow, trend, camera ------------------------------------------------
+
+    /** Tile servers when tile_config names none, and the seamarks of OpenSeaMap */
+    const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const SEAMARK_TILES = 'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png';
+    const TILE_PX = 256;
+    const MIN_ZOOM = 3;
+    const MAX_ZOOM = 18;
+    /** A position this far from the last point of the track is a new point (as the adapter records it) */
+    const TRACK_STEP_M = 20;
+    const TRACK_MAX = 2000;
+    /** Without a position: Europe */
+    const NOWHERE = { lat: 50, lon: 10 };
+    /** AIS names from this zoom on */
+    const NAMES_ZOOM = 13;
+    const AIS_COLOR = '#f59e0b';
+    const ANCHOR_COLOR = '#ef4444';
+    /** Colours of the four parts of a flow, and of the series of a trend */
+    const FLOW_COLORS = { solar: '#f59e0b', grid: '#3b82f6', battery: '#22c55e', use: '#a855f7' };
+    const SERIES_COLORS = ['#3b82f6', '#f59e0b', '#22c55e', '#a855f7'];
+    /** Below this power a line of a flow is grey and still */
+    const FLOW_IDLE_W = 5;
+    /** The periods of a trend (hours); the shortest only on a tile of three columns or more */
+    const PERIODS = [1, 6, 24, 168, 720];
+    /** Points of a series kept from tile_item_value */
+    const LIVE_POINTS = 2000;
+    /** A live picture that failed is tried again after this */
+    const CAMERA_RETRY_MS = 5000;
+
+    /**
+     * @param {unknown} v - Value
+     * @returns {number | null} The number, null when it is none
+     */
+    const numberOrNull = v =>
+        v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? null : Number(v);
+
+    /**
+     * @param {number} lat1 - Latitude
+     * @param {number} lon1 - Longitude
+     * @param {number} lat2 - Latitude
+     * @param {number} lon2 - Longitude
+     * @returns {number} Metres between the two
+     */
+    function distanceM(lat1, lon1, lat2, lon2) {
+        const rad = Math.PI / 180;
+        const a =
+            Math.sin(((lat2 - lat1) * rad) / 2) ** 2 +
+            Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lon2 - lon1) * rad) / 2) ** 2;
+        return 2 * 6_371_000 * Math.asin(Math.min(1, Math.sqrt(a)));
+    }
+
+    /**
+     * Web Mercator: a position in pixels of the whole world at a zoom.
+     *
+     * @param {number} lat - Latitude
+     * @param {number} lon - Longitude
+     * @param {number} zoom - Zoom, may be fractional
+     * @returns {{x: number, y: number}} Pixels
+     */
+    function worldXY(lat, lon, zoom) {
+        const n = TILE_PX * 2 ** zoom;
+        const s = Math.sin((Math.max(-85.05, Math.min(85.05, lat)) * Math.PI) / 180);
+        return { x: ((lon + 180) / 360) * n, y: (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * n };
+    }
+
+    /**
+     * @param {number} x - Pixels of the world
+     * @param {number} y - Pixels of the world
+     * @param {number} zoom - Zoom
+     * @returns {{lat: number, lon: number}} The position
+     */
+    function latLonOf(x, y, zoom) {
+        const n = TILE_PX * 2 ** zoom;
+        return {
+            lat: (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n))) * 180) / Math.PI,
+            lon: (((((x / n) * 360 + 180) % 360) + 360) % 360) - 180,
+        };
+    }
+
+    const clampZoom = z => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
+
+    /**
+     * Keeps the moves of a finger with an element when it leaves it (a pointer that is gone throws: ignored).
+     *
+     * @param {Element} target - Element
+     * @param {number} id - Pointer
+     */
+    function capture(target, id) {
+        try {
+            target.setPointerCapture(id);
+        } catch {
+            // not an active pointer
+        }
+    }
+
+    /**
+     * Ends what a tile keeps beyond its elements (a picture being loaded, a stream, observers); the tile is replaced
+     * or removed.
+     *
+     * @param {any} tile - Tile
+     */
+    function disposeTile(tile) {
+        tile.observer?.disconnect();
+        tile.map?.observer?.disconnect();
+        if (tile.cam) {
+            stopCamera(tile);
+            for (const url of tile.cam.urls) {
+                URL.revokeObjectURL(url);
+            }
+            tile.cam.urls = [];
+            if (fullTile === tile) {
+                closeFull();
+            }
+        }
+    }
+
+    /**
+     * Calls a drawing function once in the next frame, however often it is asked for.
+     *
+     * @param {any} holder - Object that remembers the request
+     * @param {() => void} fn - What to draw
+     */
+    function inFrame(holder, fn) {
+        if (!holder.queued) {
+            holder.queued = true;
+            requestAnimationFrame(() => {
+                holder.queued = false;
+                fn();
+            });
+        }
+    }
+
+    /**
+     * Observes the size of an element; the callback draws the tile again.
+     *
+     * @param {any} tile - Tile
+     * @param {Element} target - Element
+     */
+    function observeSize(tile, target) {
+        tile.observer?.disconnect();
+        tile.observer = new ResizeObserver(() => update(tile));
+        tile.observer.observe(target);
+    }
+
+    // ---- map -----------------------------------------------------------------------------------------------------
+
+    /**
+     * The map of a tile: its view and what it shows, kept over a new layout of the page.
+     *
+     * @param {any} tile - Map tile
+     * @returns {any} Its map
+     */
+    function mapOf(tile) {
+        if (!tile.map) {
+            tile.map = {
+                center: { ...NOWHERE },
+                zoom: MIN_ZOOM,
+                follow: true,
+                located: false,
+                pos: null,
+                track: [],
+                targets: [],
+                anchor: null,
+                el: null,
+                layers: [],
+            };
+        }
+        return tile.map;
+    }
+
+    /**
+     * The elements of a map: built once and moved into the tile each time the page is built again, so that the tile
+     * images and the view stay.
+     *
+     * @param {any} tile - Map tile
+     * @returns {HTMLElement} The map
+     */
+    function mapElement(tile) {
+        const m = mapOf(tile);
+        if (m.el) {
+            return m.el;
+        }
+        m.el = el('div', 'map');
+        m.layers = [
+            { el: m.el.appendChild(el('div', 'layer')), imgs: new Map() },
+            { el: m.el.appendChild(el('div', 'layer')), imgs: new Map() },
+        ];
+        m.canvas = m.el.appendChild(el('canvas'));
+        m.empty = m.el.appendChild(el('div', 'mapEmpty', t('noPosition')));
+        m.chip = m.el.appendChild(el('div', 'mapChip hidden'));
+        const buttons = m.el.appendChild(el('div', 'mapButtons'));
+        /** @type {[string, () => void][]} */
+        const actions = [
+            ['plus', () => zoomAt(tile, null, 1)],
+            ['minus', () => zoomAt(tile, null, -1)],
+            ['crosshairs-gps', () => recenter(tile)],
+        ];
+        for (const [icon, fn] of actions) {
+            const button = buttons.appendChild(el('button', 'mapButton'));
+            button.type = 'button';
+            button.appendChild(iconEl(icon));
+            button.addEventListener('click', ev => {
+                ev.stopPropagation();
+                fn();
+            });
+            if (icon === 'crosshairs-gps') {
+                m.centre = button;
+            }
+        }
+        m.credit = m.el.appendChild(el('div', 'credit'));
+        mapGestures(tile);
+        m.observer = new ResizeObserver(() => drawMapSoon(tile));
+        m.observer.observe(m.el);
+        return m.el;
+    }
+
+    /** @param {any} tile - Map tile */
+    function drawMapSoon(tile) {
+        inFrame(tile.map, () => drawMap(tile));
+    }
+
+    /**
+     * Zooms around a point of the map, which stays where it is.
+     *
+     * @param {any} tile - Map tile
+     * @param {{x: number, y: number} | null} at - Point in the map, null = its middle
+     * @param {number} dz - Zoom levels
+     */
+    function zoomAt(tile, at, dz) {
+        const m = tile.map;
+        const w = m.el.clientWidth;
+        const h = m.el.clientHeight;
+        const p = at || { x: w / 2, y: h / 2 };
+        const z = clampZoom(m.zoom + dz);
+        const c = worldXY(m.center.lat, m.center.lon, m.zoom);
+        const f = 2 ** (z - m.zoom);
+        m.center = latLonOf((c.x + p.x - w / 2) * f - (p.x - w / 2), (c.y + p.y - h / 2) * f - (p.y - h / 2), z);
+        m.zoom = z;
+        drawMapSoon(tile);
+    }
+
+    /** @param {any} tile - Map tile: back to the boat, and follow it again */
+    function recenter(tile) {
+        const m = tile.map;
+        m.follow = true;
+        if (m.pos) {
+            m.center = { lat: m.pos.lat, lon: m.pos.lon };
+        }
+        drawMapSoon(tile);
+    }
+
+    /**
+     * Pan with one finger, pinch with two, a double tap zooms in. A gesture on the map never turns the page (the
+     * map has touch-action: none).
+     *
+     * @param {any} tile - Map tile
+     */
+    function mapGestures(tile) {
+        const m = tile.map;
+        /** @type {Map<number, {x: number, y: number}>} */
+        const fingers = new Map();
+        /** @type {{x: number, y: number, d: number, n: number} | null} */
+        let last = null;
+        let moved = 0;
+        let lastTap = 0;
+        const local = ev => {
+            const r = m.el.getBoundingClientRect();
+            return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+        };
+        const gesture = () => {
+            const ps = [...fingers.values()];
+            const x = ps.reduce((s, p) => s + p.x, 0) / ps.length;
+            const y = ps.reduce((s, p) => s + p.y, 0) / ps.length;
+            const d = ps.length > 1 ? Math.hypot(ps[0].x - ps[1].x, ps[0].y - ps[1].y) : 0;
+            return { x, y, d, n: ps.length };
+        };
+        m.el.addEventListener('pointerdown', ev => {
+            if (ev.target.closest('.mapButton')) {
+                return;
+            }
+            capture(m.el, ev.pointerId);
+            fingers.set(ev.pointerId, local(ev));
+            if (fingers.size === 1) {
+                moved = 0;
+            }
+            last = gesture();
+        });
+        m.el.addEventListener('pointermove', ev => {
+            if (!fingers.has(ev.pointerId)) {
+                return;
+            }
+            fingers.set(ev.pointerId, local(ev));
+            const g = gesture();
+            if (last && g.n === last.n) {
+                moved += Math.abs(g.x - last.x) + Math.abs(g.y - last.y) + Math.abs(g.d - last.d);
+                if (moved > 8) {
+                    m.follow = false;
+                    const w = m.el.clientWidth;
+                    const h = m.el.clientHeight;
+                    const z = g.n > 1 && last.d > 0 ? clampZoom(m.zoom + Math.log2(g.d / last.d)) : m.zoom;
+                    const c = worldXY(m.center.lat, m.center.lon, m.zoom);
+                    // the point under the fingers stays under them
+                    const f = 2 ** (z - m.zoom);
+                    const wx = (c.x + last.x - w / 2) * f;
+                    const wy = (c.y + last.y - h / 2) * f;
+                    m.center = latLonOf(wx - (g.x - w / 2), wy - (g.y - h / 2), z);
+                    m.zoom = z;
+                    drawMapSoon(tile);
+                }
+            }
+            last = g;
+        });
+        const up = ev => {
+            if (!fingers.has(ev.pointerId)) {
+                return;
+            }
+            const at = local(ev);
+            fingers.delete(ev.pointerId);
+            last = fingers.size ? gesture() : null;
+            if (fingers.size) {
+                return;
+            }
+            if (moved <= 8 && ev.type === 'pointerup') {
+                const now = Date.now();
+                if (now - lastTap < 350) {
+                    lastTap = 0;
+                    zoomAt(tile, at, 1);
+                    return;
+                }
+                lastTap = now;
+            }
+            // whole zoom levels: the tiles are sharp
+            if (m.zoom !== Math.round(m.zoom)) {
+                zoomAt(tile, at, Math.round(m.zoom) - m.zoom);
+            }
+        };
+        m.el.addEventListener('pointerup', up);
+        m.el.addEventListener('pointercancel', up);
+    }
+
+    /**
+     * The tile images of one layer for the view: those missing are added, those out of view removed.
+     *
+     * @param {{el: HTMLElement, imgs: Map<string, HTMLImageElement>}} layer - Layer
+     * @param {string} template - URL with {z}, {x}, {y}
+     * @param {{left: number, top: number, w: number, h: number, zoom: number}} view - The view
+     */
+    function drawTiles(layer, template, view) {
+        const zi = Math.max(0, Math.min(MAX_ZOOM, Math.round(view.zoom)));
+        const size = TILE_PX * 2 ** (view.zoom - zi);
+        const n = 2 ** zi;
+        const keep = new Set();
+        const y0 = Math.max(0, Math.floor(view.top / size));
+        const y1 = Math.min(n - 1, Math.floor((view.top + view.h) / size));
+        const x0 = Math.floor(view.left / size);
+        const x1 = Math.floor((view.left + view.w) / size);
+        for (let ty = y0; ty <= y1; ty++) {
+            for (let tx = x0; tx <= x1; tx++) {
+                const wx = ((tx % n) + n) % n;
+                const key = `${zi}/${tx}/${ty}`;
+                keep.add(key);
+                let img = layer.imgs.get(key);
+                if (!img) {
+                    img = /** @type {HTMLImageElement} */ (el('img'));
+                    img.alt = '';
+                    img.draggable = false;
+                    img.decoding = 'async';
+                    // the tile servers want to know where a request comes from: the origin, never the key
+                    img.referrerPolicy = 'strict-origin';
+                    img.addEventListener('error', () => {
+                        img.style.visibility = 'hidden';
+                    });
+                    img.src = template
+                        .replace(/\{z\}/g, String(zi))
+                        .replace(/\{x\}/g, String(wx))
+                        .replace(/\{y\}/g, String(ty))
+                        .replace(/\{s\}/g, 'a');
+                    layer.imgs.set(key, img);
+                    layer.el.appendChild(img);
+                }
+                const left = Math.round(tx * size - view.left);
+                const top = Math.round(ty * size - view.top);
+                img.style.left = `${left}px`;
+                img.style.top = `${top}px`;
+                img.style.width = `${Math.round((tx + 1) * size - view.left) - left}px`;
+                img.style.height = `${Math.round((ty + 1) * size - view.top) - top}px`;
+            }
+        }
+        for (const [key, img] of layer.imgs) {
+            if (!keep.has(key)) {
+                img.remove();
+                layer.imgs.delete(key);
+            }
+        }
+    }
+
+    /** @param {any} tile - Map tile */
+    function drawMap(tile) {
+        const m = tile.map;
+        if (!m?.el?.isConnected) {
+            return;
+        }
+        const w = m.el.clientWidth;
+        const h = m.el.clientHeight;
+        if (!w || !h) {
+            return;
+        }
+        const config = tile.config || {};
+        const c = worldXY(m.center.lat, m.center.lon, m.zoom);
+        const view = { left: c.x - w / 2, top: c.y - h / 2, w, h, zoom: m.zoom };
+        drawTiles(m.layers[0], String(config.tiles || OSM_TILES), view);
+        m.layers[1].el.hidden = !config.seamarks;
+        if (config.seamarks) {
+            drawTiles(m.layers[1], String(config.seamarkTiles || SEAMARK_TILES), view);
+        }
+        m.credit.textContent = `© OpenStreetMap${config.seamarks ? ' · © OpenSeaMap' : ''}`;
+        m.empty.hidden = !!m.pos;
+        m.centre.classList.toggle('on', m.follow);
+
+        const ratio = window.devicePixelRatio || 1;
+        const canvas = m.canvas;
+        if (canvas.width !== Math.round(w * ratio) || canvas.height !== Math.round(h * ratio)) {
+            canvas.width = Math.round(w * ratio);
+            canvas.height = Math.round(h * ratio);
+        }
+        const g = canvas.getContext('2d');
+        g.setTransform(ratio, 0, 0, ratio, 0, 0);
+        g.clearRect(0, 0, w, h);
+        const xy = (lat, lon) => {
+            const p = worldXY(lat, lon, m.zoom);
+            return [p.x - view.left, p.y - view.top];
+        };
+        const accent = cssColor(tile.color) || '#3d8bfd';
+
+        // the anchor circle
+        const anchor = m.anchor;
+        if (anchor && anchor.lat !== null && anchor.lon !== null) {
+            const [ax, ay] = xy(anchor.lat, anchor.lon);
+            const metresPerPixel = (156543.03392 * Math.cos((anchor.lat * Math.PI) / 180)) / 2 ** m.zoom;
+            const r = Math.max(4, (anchor.radius || 50) / metresPerPixel);
+            g.beginPath();
+            g.arc(ax, ay, r, 0, Math.PI * 2);
+            g.fillStyle = 'rgba(239, 68, 68, 0.08)';
+            g.fill();
+            g.setLineDash([6, 5]);
+            g.lineWidth = 2;
+            g.strokeStyle = ANCHOR_COLOR;
+            g.stroke();
+            g.setLineDash([]);
+            g.beginPath();
+            g.arc(ax, ay, 4, 0, Math.PI * 2);
+            g.fillStyle = ANCHOR_COLOR;
+            g.fill();
+        }
+
+        // the track
+        const track = m.pos ? [...m.track, [m.pos.lat, m.pos.lon]] : m.track;
+        if (track.length > 1) {
+            g.beginPath();
+            track.forEach(([lat, lon], i) => {
+                const [x, y] = xy(lat, lon);
+                if (i) {
+                    g.lineTo(x, y);
+                } else {
+                    g.moveTo(x, y);
+                }
+            });
+            g.globalAlpha = 0.7;
+            g.lineWidth = 3;
+            g.lineJoin = 'round';
+            g.lineCap = 'round';
+            g.strokeStyle = accent;
+            g.stroke();
+            g.globalAlpha = 1;
+        }
+
+        // the AIS targets
+        g.font = '12px system-ui, sans-serif';
+        g.textBaseline = 'middle';
+        for (const target of m.targets) {
+            const [x, y] = xy(target.lat, target.lon);
+            if (x < -40 || y < -40 || x > w + 40 || y > h + 40) {
+                continue;
+            }
+            g.save();
+            g.translate(x, y);
+            g.fillStyle = AIS_COLOR;
+            g.strokeStyle = '#111';
+            g.lineWidth = 1;
+            if (typeof target.cog === 'number') {
+                g.rotate((target.cog * Math.PI) / 180);
+                g.beginPath();
+                g.moveTo(0, -9);
+                g.lineTo(6, 7);
+                g.lineTo(-6, 7);
+                g.closePath();
+            } else {
+                g.beginPath();
+                g.arc(0, 0, 5, 0, Math.PI * 2);
+            }
+            g.fill();
+            g.stroke();
+            g.restore();
+            if (m.zoom >= NAMES_ZOOM) {
+                const name = target.name || String(target.id);
+                g.lineWidth = 3;
+                g.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+                g.strokeText(name, x + 10, y);
+                g.fillStyle = '#fff';
+                g.fillText(name, x + 10, y);
+            }
+        }
+
+        // the boat: an arrow to its course, a dot without one
+        if (m.pos) {
+            const [x, y] = xy(m.pos.lat, m.pos.lon);
+            g.save();
+            g.translate(x, y);
+            g.fillStyle = accent;
+            g.strokeStyle = '#fff';
+            g.lineWidth = 2;
+            g.beginPath();
+            if (typeof m.pos.course === 'number') {
+                g.rotate((m.pos.course * Math.PI) / 180);
+                g.moveTo(0, -14);
+                g.lineTo(9, 10);
+                g.lineTo(0, 5);
+                g.lineTo(-9, 10);
+                g.closePath();
+            } else {
+                g.arc(0, 0, 7, 0, Math.PI * 2);
+            }
+            g.fill();
+            g.stroke();
+            g.restore();
+        }
+    }
+
+    /**
+     * The speed of the boat: in the head line of the tile, or without one in a chip on the map.
+     *
+     * @param {any} tile - Map tile
+     */
+    function drawSpeed(tile) {
+        const m = tile.map;
+        const speed = m?.pos?.speed;
+        const text = typeof speed === 'number' ? `${fmt(speed, 1)} kn` : '';
+        const target = tile.parts.speed || m?.chip;
+        if (target) {
+            target.textContent = text;
+            target.classList.toggle('hidden', !text);
+        }
+        if (tile.parts.speed && m?.chip) {
+            m.chip.classList.add('hidden');
+        }
+    }
+
+    // ---- flow ----------------------------------------------------------------------------------------------------
+
+    /**
+     * @param {number | null} watts - Power
+     * @returns {string} "850 W", "1.2 kW", or a dash
+     */
+    function powerText(watts) {
+        if (typeof watts !== 'number') {
+            return '–';
+        }
+        const w = Math.abs(watts);
+        return w >= 1000 ? `${fmt(w / 1000, 1)} kW` : `${fmt(Math.round(w), 0)} W`;
+    }
+
+    /**
+     * The energy flow: four corners around the inverter in the middle, dots along the lines in the direction of the
+     * power. The structure is built again when the size or the parts change, else only texts and dots.
+     *
+     * @param {any} tile - Flow tile
+     */
+    function drawFlow(tile) {
+        const s = tile.parts.flow;
+        const box = s?.getBoundingClientRect();
+        if (!box || !box.width || !box.height) {
+            return;
+        }
+        const w = Math.round(box.width);
+        const h = Math.round(box.height);
+        const items = tile.items;
+        const value = i => (typeof items[i]?.value === 'number' ? items[i].value : null);
+        const solar = value(0);
+        const battery = value(1);
+        const grid = value(2);
+        // without a state of its own the consumption is what comes in minus what goes into the battery
+        const use = items[3] ? value(3) : Math.max(0, (solar ?? 0) + (grid ?? 0) - (battery ?? 0));
+        const soc = value(4);
+        // two rows of a circle and two lines of text under it, with room between them
+        const r = Math.max(10, Math.min(w / 9, h / 7));
+        const text = Math.max(9, r * 0.5);
+        const below = text * 2.4;
+        const yTop = r + 2;
+        const yBottom = h - r - below;
+        const xLeft = r * 1.9;
+        const xRight = w - r * 1.9;
+        const mid = { x: w / 2, y: (yTop + yBottom) / 2 };
+        // inward: the power runs to the middle
+        const nodes = [
+            { key: 'solar', item: items[0], x: xLeft, y: yTop, p: solar, inward: true, icon: 'solar-power' },
+            {
+                key: 'grid',
+                item: items[2],
+                x: xRight,
+                y: yTop,
+                p: grid,
+                inward: (grid ?? 0) > 0,
+                icon: 'transmission-tower',
+            },
+            {
+                key: 'battery',
+                item: items[1],
+                x: xLeft,
+                y: yBottom,
+                p: battery,
+                inward: (battery ?? 0) < 0,
+                icon: '',
+            },
+            {
+                key: 'use',
+                item: items[3] || { label: '' },
+                x: xRight,
+                y: yBottom,
+                p: use,
+                inward: false,
+                icon: 'home-lightning-bolt',
+            },
+        ].filter(n => n.item);
+        const shape = `${w}x${h}|${nodes.map(n => `${n.key}:${n.item.label}`).join(',')}`;
+        if (shape !== tile.flowShape) {
+            tile.flowShape = shape;
+            tile.flowDots = {};
+            s.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            s.textContent = '';
+            tile.flowParts = {};
+            const lines = s.appendChild(svg('g'));
+            const dots = s.appendChild(svg('g'));
+            const disks = s.appendChild(svg('g'));
+            // the inverter
+            disks.appendChild(svg('circle', { cx: mid.x, cy: mid.y, r: r * 0.55, class: 'flowMid' }));
+            const flash = ICONS.flash;
+            if (flash) {
+                const inner = svg('svg', {
+                    x: mid.x - r * 0.35,
+                    y: mid.y - r * 0.35,
+                    width: r * 0.7,
+                    height: r * 0.7,
+                    viewBox: '0 0 24 24',
+                    class: 'flowIcon',
+                });
+                inner.appendChild(svg('path', { d: flash }));
+                disks.appendChild(inner);
+            }
+            for (const n of nodes) {
+                const color = FLOW_COLORS[n.key];
+                const line = lines.appendChild(
+                    svg('path', { d: `M ${n.x} ${n.y} L ${mid.x} ${mid.y}`, class: 'flowLine' }),
+                );
+                const group = dots.appendChild(svg('g'));
+                disks.appendChild(svg('circle', { cx: n.x, cy: n.y, r, class: 'flowNode', stroke: color }));
+                let fill = null;
+                if (n.key === 'battery') {
+                    // a battery filled to its charge
+                    const bw = r * 0.56;
+                    const bh = r * 0.9;
+                    disks.appendChild(
+                        svg('rect', {
+                            x: n.x - bw / 2,
+                            y: n.y - bh / 2,
+                            width: bw,
+                            height: bh,
+                            rx: r * 0.08,
+                            fill: 'none',
+                            stroke: color,
+                            'stroke-width': Math.max(1.5, r * 0.08),
+                        }),
+                    );
+                    disks.appendChild(
+                        svg('rect', {
+                            x: n.x - bw * 0.2,
+                            y: n.y - bh / 2 - r * 0.1,
+                            width: bw * 0.4,
+                            height: r * 0.1,
+                            fill: color,
+                        }),
+                    );
+                    fill = disks.appendChild(
+                        svg('rect', { x: n.x - bw / 2 + r * 0.1, width: bw - r * 0.2, fill: color, rx: r * 0.04 }),
+                    );
+                    fill.dataset.bottom = String(n.y + bh / 2 - r * 0.1);
+                    fill.dataset.full = String(bh - r * 0.2);
+                } else {
+                    const d = ICONS[n.icon] || EXTRA_ICONS[n.icon];
+                    const inner = svg('svg', {
+                        x: n.x - r * 0.55,
+                        y: n.y - r * 0.55,
+                        width: r * 1.1,
+                        height: r * 1.1,
+                        viewBox: '0 0 24 24',
+                        fill: color,
+                    });
+                    inner.appendChild(svg('path', { d }));
+                    disks.appendChild(inner);
+                }
+                const power = disks.appendChild(
+                    svg('text', { x: n.x, y: n.y + r + text * 1.05, 'font-size': text, class: 'flowPower' }),
+                );
+                const name = disks.appendChild(
+                    svg('text', { x: n.x, y: n.y + r + text * 2.15, 'font-size': text * 0.78, class: 'flowName' }),
+                );
+                tile.flowParts[n.key] = { line, group, power, name, fill, color };
+            }
+        }
+        for (const n of nodes) {
+            const part = tile.flowParts[n.key];
+            if (!part) {
+                continue;
+            }
+            part.power.textContent = powerText(n.p);
+            let name = n.item.label || t(n.key);
+            if (n.key === 'battery' && soc !== null) {
+                name = `${name} · ${fmt(soc, 0)} %`;
+            }
+            part.name.textContent = name;
+            if (part.fill) {
+                const share = soc === null ? 0 : Math.max(0, Math.min(1, soc / 100));
+                const full = Number(part.fill.dataset.full);
+                part.fill.setAttribute('height', String(full * share));
+                part.fill.setAttribute('y', String(Number(part.fill.dataset.bottom) - full * share));
+            }
+            const idle = typeof n.p !== 'number' || Math.abs(n.p) < FLOW_IDLE_W;
+            part.line.setAttribute('stroke', idle ? 'var(--track)' : part.color);
+            part.line.classList.toggle('idle', idle);
+            // 3 s for a trickle, 0.5 s from 3 kW on, on a log scale; in tenths, so that a small change keeps the dots
+            const speed = idle
+                ? 0
+                : Math.max(0, Math.min(1, Math.log10(Math.abs(n.p) / FLOW_IDLE_W) / Math.log10(600)));
+            const dur = idle ? 0 : Math.round((3 - 2.5 * speed) * 10) / 10;
+            const run = idle ? '' : `${n.inward ? 'in' : 'out'}:${dur}`;
+            if (tile.flowDots[n.key] !== run) {
+                tile.flowDots[n.key] = run;
+                part.group.textContent = '';
+                if (run) {
+                    const path = n.inward
+                        ? `M ${n.x} ${n.y} L ${mid.x} ${mid.y}`
+                        : `M ${mid.x} ${mid.y} L ${n.x} ${n.y}`;
+                    for (let k = 0; k < 3; k++) {
+                        const dot = part.group.appendChild(
+                            svg('circle', { r: Math.max(2, r * 0.12), fill: part.color }),
+                        );
+                        dot.appendChild(
+                            svg('animateMotion', {
+                                dur: `${dur}s`,
+                                begin: `${(-dur * k) / 3}s`,
+                                repeatCount: 'indefinite',
+                                path,
+                            }),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    // ---- trend ---------------------------------------------------------------------------------------------------
+
+    /**
+     * @param {number} hours - Period
+     * @returns {string} 6h, 24h, 7d, 30d
+     */
+    const periodText = hours => (hours >= 48 ? `${Math.round(hours / 24)}d` : `${hours}h`);
+
+    /**
+     * The tablet shows another period: it asks the adapter for its history.
+     *
+     * @param {any} tile - Trend tile
+     * @param {number} hours - Period
+     */
+    function setPeriod(tile, hours) {
+        if (tile.period === hours) {
+            return;
+        }
+        tile.period = hours;
+        sendInput(tile, 'period', hours);
+        update(tile);
+    }
+
+    /**
+     * About `count` round steps between lo and hi.
+     *
+     * @param {number} lo - Lowest value
+     * @param {number} hi - Highest value
+     * @param {number} count - Ticks wanted
+     * @returns {number[]} The ticks
+     */
+    function niceTicks(lo, hi, count) {
+        const raw = (hi - lo) / Math.max(1, count);
+        const mag = 10 ** Math.floor(Math.log10(raw));
+        const step = [1, 2, 2.5, 5, 10].map(f => f * mag).find(s => s >= raw) || raw;
+        const ticks = [];
+        for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-9; v += step) {
+            ticks.push(Math.round(v / step) * step);
+        }
+        return ticks;
+    }
+
+    /** Steps of the time axis */
+    const TIME_STEPS = [5, 10, 15, 30, 60, 120, 180, 360, 720, 1440, 2880, 10080].map(m => m * 60_000);
+
+    /**
+     * The chart of a trend: lines with axes, a fill under the first, the cursor while a finger is on it.
+     *
+     * @param {any} tile - Trend tile
+     */
+    function drawTrend(tile) {
+        const canvas = tile.parts.canvas;
+        const box = canvas?.getBoundingClientRect();
+        if (!box || !box.width || !box.height) {
+            return;
+        }
+        const w = box.width;
+        const h = box.height;
+        const ratio = window.devicePixelRatio || 1;
+        if (canvas.width !== Math.round(w * ratio) || canvas.height !== Math.round(h * ratio)) {
+            canvas.width = Math.round(w * ratio);
+            canvas.height = Math.round(h * ratio);
+        }
+        const g = canvas.getContext('2d');
+        g.setTransform(ratio, 0, 0, ratio, 0, 0);
+        g.clearRect(0, 0, w, h);
+        const style = getComputedStyle(canvas);
+        const muted = style.getPropertyValue('--muted').trim() || '#8a96a3';
+        const track = style.getPropertyValue('--track').trim() || '#33404c';
+        const font = Math.max(10, Math.min(14, h / 12));
+        g.font = `${font}px system-ui, sans-serif`;
+
+        const now = Date.now();
+        const span = tile.period * 3600_000;
+        const t0 = now - span;
+        const colors = [cssColor(tile.color) || SERIES_COLORS[0], ...SERIES_COLORS.slice(1)];
+        const series = [0, 1, 2, 3]
+            .filter(i => tile.items[i])
+            .map(i => ({
+                i,
+                item: tile.items[i],
+                color: colors[i],
+                points: (tile.series[i] || []).filter(p => p[0] >= t0 - span * 0.02),
+            }));
+        // one axis per unit, two at most: the first unit left, a second right
+        const units = [...new Set(series.map(s => s.item.unit))];
+        const a = tile.args;
+        const axes = units.map((unit, k) => {
+            const values = series.filter(s => s.item.unit === unit).flatMap(s => s.points.map(p => p[1]));
+            let lo = values.length ? Math.min(...values) : 0;
+            let hi = values.length ? Math.max(...values) : 1;
+            if (k === 0 && a.max > a.min) {
+                lo = a.min;
+                hi = a.max;
+            } else {
+                const margin = (hi - lo) * 0.05 || Math.abs(hi) * 0.05 || 1;
+                lo -= margin;
+                hi += margin;
+            }
+            return { unit, lo, hi, ticks: niceTicks(lo, hi, Math.max(2, Math.min(4, Math.floor(h / 45)))) };
+        });
+        // as many decimals as the step of the ticks needs, and no "-0"
+        const label = (axis, v) => {
+            const step = axis.ticks.length > 1 ? Math.abs(axis.ticks[1] - axis.ticks[0]) : 1;
+            const d = Math.max(0, Math.min(3, -Math.floor(Math.log10(step) + 1e-9)));
+            return fmt(Math.abs(v) < step * 1e-6 ? 0 : v, d);
+        };
+        const width = axis => (axis ? Math.max(...axis.ticks.map(v => g.measureText(label(axis, v)).width), 0) + 8 : 6);
+        const left = width(axes[0]);
+        const right = width(axes[1]);
+        const top = font * 0.6;
+        const bottom = font * 1.6;
+        const pw = Math.max(1, w - left - right);
+        const ph = Math.max(1, h - top - bottom);
+        const X = time => left + ((time - t0) / span) * pw;
+        const Y = (axis, v) => top + (1 - (v - axis.lo) / (axis.hi - axis.lo || 1)) * ph;
+
+        // grid and the value axes
+        g.lineWidth = 1;
+        g.textBaseline = 'middle';
+        axes.slice(0, 2).forEach((axis, k) => {
+            for (const v of axis.ticks) {
+                const y = Y(axis, v);
+                if (y < top - 1 || y > top + ph + 1) {
+                    continue;
+                }
+                if (k === 0) {
+                    g.strokeStyle = track;
+                    g.beginPath();
+                    g.moveTo(left, Math.round(y) + 0.5);
+                    g.lineTo(left + pw, Math.round(y) + 0.5);
+                    g.stroke();
+                }
+                g.fillStyle = muted;
+                g.textAlign = k === 0 ? 'right' : 'left';
+                g.fillText(label(axis, v), k === 0 ? left - 5 : left + pw + 5, y);
+            }
+        });
+
+        // the time axis: local time, round steps
+        const steps = Math.max(2, Math.floor(pw / (font * 6)));
+        const step = TIME_STEPS.find(s => span / s <= steps) || TIME_STEPS[TIME_STEPS.length - 1];
+        const offset = new Date(now).getTimezoneOffset() * 60_000;
+        const long = span > 24 * 3600_000;
+        g.textAlign = 'center';
+        g.textBaseline = 'top';
+        for (let time = Math.ceil((t0 - offset) / step) * step + offset; time <= now; time += step) {
+            const x = X(time);
+            const d = new Date(time);
+            const text = !long
+                ? d.toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit' })
+                : step < 1440 * 60_000
+                  ? d.toLocaleDateString(navigator.language, { weekday: 'short' }) +
+                    ` ${d.toLocaleTimeString(navigator.language, { hour: '2-digit' })}`
+                  : span > 8 * 24 * 3600_000
+                    ? d.toLocaleDateString(navigator.language, { day: 'numeric', month: 'numeric' })
+                    : d.toLocaleDateString(navigator.language, { weekday: 'short' });
+            g.strokeStyle = track;
+            g.beginPath();
+            g.moveTo(Math.round(x) + 0.5, top + ph);
+            g.lineTo(Math.round(x) + 0.5, top + ph + 4);
+            g.stroke();
+            g.fillStyle = muted;
+            g.fillText(text, x, top + ph + 5);
+        }
+
+        // the lines, the first with a fill under it
+        g.save();
+        g.beginPath();
+        g.rect(left, top, pw, ph);
+        g.clip();
+        series.forEach((s, k) => {
+            const axis = axes[units.indexOf(s.item.unit)];
+            if (!axis || s.points.length < 2) {
+                return;
+            }
+            g.beginPath();
+            s.points.forEach(([time, v], i) => {
+                if (i) {
+                    g.lineTo(X(time), Y(axis, v));
+                } else {
+                    g.moveTo(X(time), Y(axis, v));
+                }
+            });
+            if (k === 0) {
+                g.save();
+                g.lineTo(X(s.points[s.points.length - 1][0]), top + ph);
+                g.lineTo(X(s.points[0][0]), top + ph);
+                g.closePath();
+                g.globalAlpha = 0.15;
+                g.fillStyle = s.color;
+                g.fill();
+                g.restore();
+                g.beginPath();
+                s.points.forEach(([time, v], i) => {
+                    if (i) {
+                        g.lineTo(X(time), Y(axis, v));
+                    } else {
+                        g.moveTo(X(time), Y(axis, v));
+                    }
+                });
+            }
+            g.lineWidth = 2;
+            g.lineJoin = 'round';
+            g.strokeStyle = s.color;
+            g.stroke();
+        });
+        g.restore();
+
+        // the cursor: the time under the finger and the value of each series then
+        if (typeof tile.cursorX === 'number' && series.length) {
+            const x = Math.max(left, Math.min(left + pw, tile.cursorX));
+            const time = t0 + ((x - left) / pw) * span;
+            g.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            g.lineWidth = 1;
+            g.beginPath();
+            g.moveTo(Math.round(x) + 0.5, top);
+            g.lineTo(Math.round(x) + 0.5, top + ph);
+            g.stroke();
+            const d = new Date(time);
+            const lines = [
+                {
+                    text: long
+                        ? `${d.toLocaleDateString(navigator.language, { weekday: 'short', day: 'numeric', month: 'numeric' })} ${d.toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit' })}`
+                        : d.toLocaleTimeString(navigator.language, { hour: '2-digit', minute: '2-digit' }),
+                    color: '#fff',
+                },
+            ];
+            for (const s of series) {
+                if (!s.points.length) {
+                    continue;
+                }
+                const near = s.points.reduce((best, p) =>
+                    Math.abs(p[0] - time) < Math.abs(best[0] - time) ? p : best,
+                );
+                const axis = axes[units.indexOf(s.item.unit)];
+                if (axis) {
+                    g.fillStyle = s.color;
+                    g.beginPath();
+                    g.arc(X(near[0]), Y(axis, near[1]), 3.5, 0, Math.PI * 2);
+                    g.fill();
+                }
+                lines.push({
+                    text: `${s.item.label ? `${s.item.label} ` : ''}${fmt(near[1], s.item.decimals)}${s.item.unit ? ` ${s.item.unit}` : ''}`,
+                    color: s.color,
+                });
+            }
+            const bw = Math.max(...lines.map(l => g.measureText(l.text).width)) + 12;
+            const bh = lines.length * font * 1.3 + 8;
+            const bx = x + 10 + bw > left + pw ? x - 10 - bw : x + 10;
+            g.fillStyle = 'rgba(16, 20, 24, 0.9)';
+            g.fillRect(bx, top + 2, bw, bh);
+            g.textAlign = 'left';
+            g.textBaseline = 'top';
+            lines.forEach((l, i) => {
+                g.fillStyle = l.color;
+                g.fillText(l.text, bx + 6, top + 6 + i * font * 1.3);
+            });
+        }
+    }
+
+    /**
+     * The names and current values of the series in the head line, and which period is on.
+     *
+     * @param {any} tile - Trend tile
+     */
+    function drawLegend(tile) {
+        const legend = tile.parts.legend;
+        if (legend) {
+            const colors = [cssColor(tile.color) || SERIES_COLORS[0], ...SERIES_COLORS.slice(1)];
+            legend.innerHTML = [0, 1, 2, 3]
+                .filter(i => tile.items[i])
+                .map(i => {
+                    const item = tile.items[i];
+                    return `<span style="color:${colors[i]}">●</span><span class="name">${escapeHtml(item.label)}</span> ${itemHtml(item)}`;
+                })
+                .map(html => `<span class="serie">${html}</span>`)
+                .join('');
+        }
+        for (const chip of tile.parts.chips || []) {
+            chip.classList.toggle('on', Number(chip.dataset.hours) === tile.period);
+        }
+    }
+
+    // ---- camera --------------------------------------------------------------------------------------------------
+
+    /** The tile whose picture is shown on the whole screen, null = none */
+    let fullTile = null;
+    const fullEl = document.body.appendChild(el('div'));
+    fullEl.id = 'camFull';
+    fullEl.hidden = true;
+    fullEl.addEventListener('click', () => closeFull(true));
+    window.addEventListener('popstate', () => closeFull());
+
+    /**
+     * The picture of a camera tile on the whole screen: its picture element moves there (one stream, not two).
+     *
+     * @param {any} tile - Camera tile
+     */
+    function openFull(tile) {
+        if (fullTile || !tile.cam) {
+            return;
+        }
+        fullTile = tile;
+        fullEl.appendChild(tile.cam.img);
+        fullEl.hidden = false;
+        try {
+            history.pushState({ camera: true }, '');
+        } catch {
+            // without history the back button leaves the page
+        }
+        syncCameras();
+    }
+
+    /** @param {boolean} [back] - Also take the history entry of openFull back */
+    function closeFull(back) {
+        const tile = fullTile;
+        if (!tile) {
+            return;
+        }
+        fullTile = null;
+        fullEl.hidden = true;
+        tile.cam.box.insertBefore(tile.cam.img, tile.cam.box.firstChild);
+        if (back && history.state?.camera) {
+            history.back();
+        }
+        syncCameras();
+    }
+
+    /**
+     * The picture of a camera tile, kept over a new layout of the page.
+     *
+     * @param {any} tile - Camera tile
+     * @returns {any} Its camera
+     */
+    function cameraOf(tile) {
+        if (!tile.cam) {
+            const box = el('div', 'camera');
+            const img = /** @type {HTMLImageElement} */ (box.appendChild(el('img')));
+            img.alt = '';
+            img.draggable = false;
+            const off = box.appendChild(el('div', 'off'));
+            off.appendChild(iconEl('camera-off'));
+            off.appendChild(el('span', '', t('noPicture')));
+            // run: the number of the current start, so that a request of an earlier one ends quietly
+            const cam = { box, img, off, running: false, ok: false, timer: 0, ctrl: null, urls: [], run: 0 };
+            img.addEventListener('load', () => {
+                cam.ok = true;
+                drawCamera(tile);
+            });
+            tile.cam = cam;
+        }
+        return tile.cam;
+    }
+
+    /**
+     * Shows a picture; the one shown stays until this one is there (no flicker).
+     *
+     * @param {any} cam - Camera of a tile
+     * @param {Blob} blob - The picture
+     */
+    function showPicture(cam, blob) {
+        const url = URL.createObjectURL(blob);
+        cam.urls.push(url);
+        cam.img.src = url;
+        while (cam.urls.length > 2) {
+            URL.revokeObjectURL(cam.urls.shift());
+        }
+    }
+
+    /**
+     * @param {Uint8Array} hay - Bytes
+     * @param {Uint8Array} needle - Bytes looked for
+     * @param {number} from - First index
+     * @returns {number} Index of the first match, -1 for none
+     */
+    function bytesIndexOf(hay, needle, from) {
+        for (
+            let i = hay.indexOf(needle[0], from);
+            i >= 0 && i <= hay.length - needle.length;
+            i = hay.indexOf(needle[0], i + 1)
+        ) {
+            let k = 1;
+            while (k < needle.length && hay[i + k] === needle[k]) {
+                k++;
+            }
+            if (k === needle.length) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    const HEAD_END = new Uint8Array([13, 10, 13, 10]);
+    /** A stream whose frames are bigger than this is no camera: it is dropped */
+    const MAX_FRAME = 8 * 1024 * 1024;
+
+    /**
+     * The frames of a live picture (multipart/x-mixed-replace, MJPEG), read here rather than by an <img>: an <img>
+     * keeps a stream open after its src is gone, and the camera would run on behind a hidden page.
+     *
+     * @param {Response} r - Answer of the adapter
+     * @param {any} cam - Camera of a tile
+     * @param {() => boolean} current - False when this run has ended
+     */
+    async function readFrames(r, cam, current) {
+        const type = r.headers.get('content-type') || '';
+        const m = /boundary="?([^";,]+)"?/i.exec(type);
+        if (!m || !r.body) {
+            showPicture(cam, await r.blob());
+            return;
+        }
+        // "--" and the boundary starts every part; a camera that puts the dashes into the boundary itself matches too
+        const boundary = new TextEncoder().encode(`--${m[1].replace(/^-+/, '')}`);
+        const decoder = new TextDecoder();
+        const reader = r.body.getReader();
+        let buf = new Uint8Array(0);
+        while (current()) {
+            const { value, done } = await reader.read();
+            if (done) {
+                return;
+            }
+            const next = new Uint8Array(buf.length + value.length);
+            next.set(buf);
+            next.set(value, buf.length);
+            buf = next;
+            for (;;) {
+                const start = bytesIndexOf(buf, boundary, 0);
+                const head = start < 0 ? -1 : bytesIndexOf(buf, HEAD_END, start);
+                if (head < 0) {
+                    break;
+                }
+                const headers = decoder.decode(buf.subarray(start, head));
+                const length = /content-length:\s*(\d+)/i.exec(headers);
+                const body = head + HEAD_END.length;
+                let end;
+                if (length) {
+                    end = body + Number(length[1]);
+                    if (end > buf.length) {
+                        break;
+                    }
+                } else {
+                    end = bytesIndexOf(buf, boundary, body);
+                    if (end < 0) {
+                        break;
+                    }
+                    // the line break before the next boundary
+                    while (end > body && (buf[end - 1] === 10 || buf[end - 1] === 13)) {
+                        end--;
+                    }
+                }
+                const kind = /content-type:\s*([^\r\n;]+)/i.exec(headers)?.[1] || 'image/jpeg';
+                if (current()) {
+                    showPicture(cam, new Blob([buf.slice(body, end)], { type: kind }));
+                }
+                buf = buf.slice(end);
+            }
+            if (buf.length > MAX_FRAME) {
+                throw new Error('frame too big');
+            }
+        }
+    }
+
+    /**
+     * The picture of a camera from the adapter (GET cam/<page>/<slot>): every interval seconds one, or with interval 0
+     * the frames of a live stream. Again after an error.
+     *
+     * @param {any} tile - Camera tile
+     * @param {number} run - The start this belongs to
+     */
+    async function loadPicture(tile, run) {
+        const cam = tile.cam;
+        const src = tile.config?.src;
+        const current = () => cam.running && cam.run === run;
+        if (!current() || !src) {
+            return;
+        }
+        const live = tile.config.interval === 0;
+        const ctrl = new AbortController();
+        cam.ctrl = ctrl;
+        // a picture within 15 s; a stream only until its first answer
+        const timer = setTimeout(() => ctrl.abort(), 15_000);
+        let failed = false;
+        try {
+            const r = await fetch(`${src}?t=${Date.now()}`, { cache: 'no-store', signal: ctrl.signal });
+            if (!r.ok) {
+                throw new Error(String(r.status));
+            }
+            if (live) {
+                clearTimeout(timer);
+                await readFrames(r, cam, current);
+            } else {
+                const blob = await r.blob();
+                if (current()) {
+                    showPicture(cam, blob);
+                }
+            }
+        } catch {
+            failed = true;
+        } finally {
+            clearTimeout(timer);
+            if (cam.ctrl === ctrl) {
+                cam.ctrl = null;
+            }
+        }
+        if (!current()) {
+            return;
+        }
+        if (failed || live) {
+            cam.ok = false;
+            drawCamera(tile);
+        }
+        const wait = failed || live ? CAMERA_RETRY_MS : Math.max(1, tile.config.interval) * 1000;
+        cam.timer = setTimeout(() => void loadPicture(tile, run), wait);
+    }
+
+    /** @param {any} tile - Camera tile */
+    function startCamera(tile) {
+        const cam = cameraOf(tile);
+        if (cam.running || !tile.config?.src) {
+            return;
+        }
+        cam.running = true;
+        cam.run++;
+        void loadPicture(tile, cam.run);
+    }
+
+    /** @param {any} tile - Camera tile: its request ends, and with it the adapter's request to the camera */
+    function stopCamera(tile) {
+        const cam = tile.cam;
+        if (!cam?.running) {
+            return;
+        }
+        cam.running = false;
+        clearTimeout(cam.timer);
+        cam.ctrl?.abort();
+        cam.ctrl = null;
+    }
+
+    /** @param {any} tile - Camera tile: the placeholder while there is no picture */
+    function drawCamera(tile) {
+        if (tile.cam) {
+            tile.cam.off.hidden = tile.cam.ok;
+        }
+    }
+
+    /** Cameras run while their page is on screen (or their picture is on the whole screen), and only then. */
+    function syncCameras() {
+        const page = currentPage();
+        const shown = !document.hidden && !clock.shown && !lock.locked;
+        for (const tile of tiles.values()) {
+            if (tile.args.type !== 'camera') {
+                continue;
+            }
+            const on =
+                shown && !!tile.cam?.box && (fullTile === tile || (tile.page === page && tile.cam.box.isConnected));
+            if (on) {
+                startCamera(tile);
+            } else if (tile.cam) {
+                stopCamera(tile);
+            }
+            drawCamera(tile);
+        }
+    }
+    document.addEventListener('visibilitychange', syncCameras);
+    setInterval(syncCameras, 1000);
+    // the time axis of a trend moves on
+    setInterval(() => {
+        for (const tile of tiles.values()) {
+            if (tile.args.type === 'trend' && tile.el?.isConnected) {
+                drawTrend(tile);
+            }
+        }
+    }, 60_000);
 
     // ---- pages, clock, idle ------------------------------------------------------------------------------------
 
@@ -950,24 +2596,43 @@
         $('pageTitle').textContent = pageTitles.get(currentPage()) || '';
     }
 
+    /**
+     * The dots of the pages, one button each: a tap goes to that page. The way off a page that a map fills, whose
+     * every swipe moves the map. Built again only when the number of pages changes, else the buttons stay - a tap
+     * while the pages scroll would otherwise lose its button between down and up.
+     */
     function drawDots() {
         const dots = $('dots');
         const count = pagesEl.querySelectorAll('.page').length;
-        dots.textContent = '';
-        if (count < 2) {
-            return;
+        const shown = count < 2 ? 0 : count;
+        if (dots.children.length !== shown) {
+            dots.textContent = '';
+            for (let n = 0; n < shown; n++) {
+                const dot = /** @type {HTMLButtonElement} */ (dots.appendChild(el('button')));
+                dot.type = 'button';
+                dot.dataset.index = String(n);
+                dot.setAttribute('aria-label', t('page', { n: n + 1 }));
+            }
         }
         const i = Math.round(pagesEl.scrollLeft / Math.max(1, pagesEl.clientWidth));
-        for (let n = 0; n < count; n++) {
-            dots.appendChild(el('i', n === i ? 'on' : ''));
-        }
+        [...dots.children].forEach((dot, n) => {
+            dot.classList.toggle('on', n === i);
+            dot.setAttribute('aria-current', n === i ? 'page' : 'false');
+        });
     }
+    $('dots').addEventListener('click', e => {
+        const dot = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest('#dots button'));
+        if (dot) {
+            pagesEl.scrollTo({ left: Number(dot.dataset.index) * pagesEl.clientWidth, behavior: 'smooth' });
+        }
+    });
     pagesEl.addEventListener(
         'scroll',
         () =>
             requestAnimationFrame(() => {
                 drawDots();
                 drawTitle();
+                syncCameras();
             }),
         { passive: true },
     );

@@ -16,7 +16,16 @@ const { TabletServer, lanAddressOf } = require('./lib/tablet-server');
 const { PairingCodes, pairedRow, namesOf, PAIR_MS } = require('./lib/pairing');
 const { decideTls } = require('./lib/tls');
 const { checkTcpPort, registerTcpPort } = require('./lib/used-resources');
-const { normalizeDisplays, normalizeTiles, idOf, colorOf, pageTitlesOf, ITEM_TYPES } = require('./lib/layout');
+const {
+    normalizeDisplays,
+    normalizeTiles,
+    idOf,
+    colorOf,
+    pageTitlesOf,
+    ITEM_TYPES,
+    TABLET_TYPES,
+} = require('./lib/layout');
+const { TabletTiles } = require('./lib/tablet-tiles');
 const { findRenames, renameTiles, renamePageTitles } = require('./lib/renames');
 const { planRemoval } = require('./lib/cleanup');
 const { SatelliteDeviceManagement } = require('./lib/device-management');
@@ -74,7 +83,7 @@ const DEFAULT_PWA_PORT = 8094;
  * @returns {string[]} The states the tile shows, without the one of its background
  */
 function statesOf(tile) {
-    return [tile.state, tile.state2, tile.state3, tile.state4].filter(Boolean);
+    return [tile.state, tile.state2, tile.state3, tile.state4, tile.state5].filter(Boolean);
 }
 
 class SatelliteDisplay extends utils.Adapter {
@@ -121,6 +130,10 @@ class SatelliteDisplay extends utils.Adapter {
         this.saveTimer = undefined;
         // the satellites and tablets in the Device Manager (tab Devices); it answers the dm:* messages itself
         this.deviceManagement = new SatelliteDeviceManagement(this);
+        // map, flow, trend and camera: what only a tablet draws (track, AIS, history, camera pictures)
+        this.tabletTiles = new TabletTiles(this);
+        /** the data directory of the instance (the tracks of the maps) */
+        this.dataDir = '';
     }
 
     async onReady() {
@@ -158,7 +171,10 @@ class SatelliteDisplay extends utils.Adapter {
         }
 
         await this.createObjects(displays);
+        this.dataDir = utils.getAbsoluteInstanceDataDir(this);
+        await this.tabletTiles.start();
         await this.bindTiles(tiles);
+        await this.tabletTiles.bind(this.bound);
         for (const folder of ['satellites', 'tablets']) {
             await this.subscribeStatesAsync(`${folder}.*.resend`);
             await this.subscribeStatesAsync(`${folder}.*.locked`);
@@ -369,6 +385,7 @@ class SatelliteDisplay extends utils.Adapter {
             },
             log: this.log,
             onPair: (request, from) => this.onPair(request, from),
+            onCamera: (request, res, headers) => this.onCameraRequest(request, res, headers),
         });
         try {
             const address = await server.start({
@@ -394,6 +411,27 @@ class SatelliteDisplay extends utils.Adapter {
                 } - choose another port in the settings, tab Tablets`,
             );
         }
+    }
+
+    /**
+     * The picture of a camera tile, asked for by its tablet (GET /t/<key>/cam/<page>/<slot>).
+     *
+     * @param {{key: string, page: number, slot: number, req: import('node:http').IncomingMessage}} request - Which
+     * @param {import('node:http').ServerResponse} res - Response
+     * @param {Record<string, string>} headers - Headers of every answer
+     */
+    async onCameraRequest({ key, page, slot, req }, res, headers) {
+        const link = this.tabletOfKey(key);
+        const tabletId = link ? [...this.links].find(([, l]) => l === link)?.[0] : undefined;
+        const b = tabletId
+            ? this.shownOn(tabletId).find(x => x.tile.page === page && x.tile.slot === slot && x.tile.type === 'camera')
+            : undefined;
+        if (!b || !tabletId) {
+            res.writeHead(404, headers);
+            res.end();
+            return;
+        }
+        await this.tabletTiles.serveCamera(b, tabletId, req, res, headers);
     }
 
     /**
@@ -1187,6 +1225,10 @@ class SatelliteDisplay extends utils.Adapter {
             }
         }
         for (const b of mine) {
+            // a map, flow, trend or camera: its config (and track, targets, history) before its values
+            if (TABLET_TYPES.includes(b.tile.type)) {
+                await this.tabletTiles.sendInitial(link, b);
+            }
             await this.pushAll(b);
             if (b.tile.type === 'chart') {
                 await this.pushHistory(b);
@@ -1204,9 +1246,14 @@ class SatelliteDisplay extends utils.Adapter {
      * @returns {boolean} True when the firmware can show the tile
      */
     supported(sat, link, b) {
-        /** @type {'tile_setpoint' | 'tile_item' | null} */
-        const needed =
-            b.tile.type === 'thermostat' ? 'tile_setpoint' : ITEM_TYPES.includes(b.tile.type) ? 'tile_item' : null;
+        /** @type {'tile_setpoint' | 'tile_item' | 'tile_config' | null} */
+        const needed = TABLET_TYPES.includes(b.tile.type)
+            ? 'tile_config'
+            : b.tile.type === 'thermostat'
+              ? 'tile_setpoint'
+              : ITEM_TYPES.includes(b.tile.type)
+                ? 'tile_item'
+                : null;
         if (!needed || link.has(needed)) {
             return true;
         }
@@ -1215,7 +1262,9 @@ class SatelliteDisplay extends utils.Adapter {
             this.oldFirmwareWarned.add(key);
             const kind = needed === 'tile_setpoint' ? 'a thermostat tile' : `a ${b.tile.type} tile`;
             this.log.warn(
-                `${sat.name}: ${kind} needs the satellite firmware ${OPTIONAL_ACTIONS[needed]} or newer, it is left out`,
+                needed === 'tile_config'
+                    ? `${sat.name}: ${kind} is drawn by tablets only, it is left out`
+                    : `${sat.name}: ${kind} needs the satellite firmware ${OPTIONAL_ACTIONS[needed]} or newer, it is left out`,
             );
         }
         return false;
@@ -1227,7 +1276,8 @@ class SatelliteDisplay extends utils.Adapter {
      * @param {Bound} b - Tile
      */
     async pushAll(b) {
-        if (b.tile.type === 'button') {
+        // a camera has no values: its tablet fetches the picture
+        if (b.tile.type === 'button' || b.tile.type === 'camera') {
             return;
         }
         try {
@@ -1253,6 +1303,11 @@ class SatelliteDisplay extends utils.Adapter {
      * @param {unknown} val - New value
      */
     push(b, id, val) {
+        // a map records its track also while its tablet is away
+        if (b.tile.type === 'map') {
+            this.tabletTiles.onMapValue(b, id, val);
+            return;
+        }
         const link = this.links.get(b.tile.satellite);
         if (!link?.ready) {
             return;
@@ -1363,8 +1418,16 @@ class SatelliteDisplay extends utils.Adapter {
                 this.pushItems(link, b, id, val);
                 break;
             case 'group':
+            case 'trend':
                 this.pushItems(link, b, id, val);
                 break;
+            case 'flow': {
+                // a flow draws watts: a power in kW is converted
+                const n = toNumber(val);
+                const kw = String(b.commons.get(id)?.unit || '').toLowerCase() === 'kw';
+                this.pushItems(link, b, id, kw && n !== null ? n * 1000 : val);
+                break;
+            }
             default:
                 break;
         }
@@ -1549,6 +1612,10 @@ class SatelliteDisplay extends utils.Adapter {
             return;
         }
         const { tile } = b;
+        if (tile.type === 'trend' && input.input === 'period') {
+            await this.tabletTiles.onPeriod(b, input.value);
+            return;
+        }
         /** @type {{id: string, val: ioBroker.StateValue, common: Partial<ioBroker.StateCommon>} | null} */
         let target = null;
         if (tile.type === 'switch' && input.input === 'switch') {
@@ -1644,6 +1711,10 @@ class SatelliteDisplay extends utils.Adapter {
             }
             return;
         }
+        // the AIS targets and the anchor of the maps
+        if (this.tabletTiles.onState(id, state, this.bound)) {
+            return;
+        }
         if (!showsChange(id, state)) {
             return; // a command the device has not confirmed yet
         }
@@ -1675,9 +1746,12 @@ class SatelliteDisplay extends utils.Adapter {
             void this.setState('info.connection', { val: false, ack: true });
         } catch (e) {
             this.log.error(`unload: ${e.message}`);
-        } finally {
-            callback();
         }
+        // the tracks of the maps are saved before the instance ends
+        this.tabletTiles
+            .stop()
+            .catch(e => this.log.error(`unload: ${e.message}`))
+            .finally(() => callback());
     }
 }
 

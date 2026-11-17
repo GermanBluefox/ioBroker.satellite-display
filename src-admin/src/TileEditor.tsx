@@ -37,6 +37,8 @@ import {
     ALERT_KINDS,
     EXTRA_STATES,
     FIRMWARE_230_KINDS,
+    TABLET_KINDS,
+    TITLE_KINDS,
     ICONS,
     KINDS,
     SATELLITE_GRID,
@@ -61,6 +63,7 @@ import {
     type TileRow,
 } from './layout';
 import { TileIcon } from './icons';
+import { mdiCctv, mdiHomeLightningBolt, mdiSolarPower, mdiTransmissionTower } from '@mdi/js';
 
 /** The line of a chart in the preview without a history */
 const SAMPLE_LINE = [0, 0.6, 0.4, 0.7, 0.3, 0.5, 0.2, 0.45, 0.35];
@@ -130,10 +133,34 @@ const KIND_KEYS: Record<Kind, string> = {
     level: 'sd_kind_level',
     battery: 'sd_kind_battery',
     status: 'sd_kind_status',
+    map: 'sd_kind_map',
+    flow: 'sd_kind_flow',
+    trend: 'sd_kind_trend',
+    camera: 'sd_kind_camera',
 };
-const SIZE_LABELS: Record<Size, string> = { s: '1 × 1', q: '1 × 2', w: '2 × 1', l: '2 × 2' };
+const SIZE_LABELS: Record<Size, string> = { s: '1 × 1', q: '1 × 2', w: '2 × 1', l: '2 × 2', x: '3 × 2', f: '4 × 3' };
 
-type StateAttr = 'state' | 'state2' | 'state3' | 'state4' | 'bgState';
+type StateAttr = 'state' | 'state2' | 'state3' | 'state4' | 'state5' | 'bgState';
+
+/** The parts of a flow (www/app.js FLOW_COLORS): state, the field of its name, the i18n key, colour, icon */
+const FLOW_PARTS: [StateAttr, 'label' | 'label2' | 'label3' | 'label4' | '', string, string, string][] = [
+    ['state', 'label', 'sd_flow_solar', '#f59e0b', mdiSolarPower],
+    ['state2', 'label2', 'sd_flow_battery', '#22c55e', ''],
+    ['state3', 'label3', 'sd_flow_grid', '#3b82f6', mdiTransmissionTower],
+    ['state4', 'label4', 'sd_flow_use', '#a855f7', mdiHomeLightningBolt],
+    ['state5', '', 'sd_flow_soc', '#22c55e', ''],
+];
+
+/** The names a flow gives its parts when the settings give none (www/app.js TEXTS) */
+const FLOW_NAMES: Record<string, string> = {
+    sd_flow_solar: 'sd_flow_solar_name',
+    sd_flow_battery: 'sd_flow_battery_name',
+    sd_flow_grid: 'sd_flow_grid_name',
+    sd_flow_use: 'sd_flow_use_name',
+};
+
+/** Colours of the series of a trend (www/app.js SERIES_COLORS) */
+const SERIES_COLORS = ['#3b82f6', '#f59e0b', '#22c55e', '#a855f7'];
 
 /** On and off in the language of the admin (lib/values.js ON_OFF) */
 const ON_OFF: Record<string, [string, string]> = {
@@ -578,7 +605,14 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
         const socket = this.props.oContext.socket;
         const ids = new Set<string>();
         for (const t of this.pageTiles()) {
-            for (const id of [t.tile.state, t.tile.state2, t.tile.state3, t.tile.state4, t.tile.bgState || '']) {
+            for (const id of [
+                t.tile.state,
+                t.tile.state2,
+                t.tile.state3,
+                t.tile.state4,
+                t.tile.state5 || '',
+                t.tile.bgState || '',
+            ]) {
                 if (id && !(id in this.state.values)) {
                     ids.add(id);
                 }
@@ -717,7 +751,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
         const hints: string[] = [];
         const common = (id: string): Partial<ioBroker.StateCommon> | null | undefined =>
             id ? this.state.commons[id] : undefined;
-        for (const id of [t.state, t.state2, t.state3, t.state4]) {
+        for (const id of [t.state, t.state2, t.state3, t.state4, t.state5]) {
             if (id && common(id) === null) {
                 hints.push('sd_hint_missing');
                 break;
@@ -966,6 +1000,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
             state2: EXTRA_STATES.state2.includes(type) ? t.state2 : '',
             state3: EXTRA_STATES.state3.includes(type) ? t.state3 || '' : '',
             state4: EXTRA_STATES.state4.includes(type) ? t.state4 || '' : '',
+            state5: EXTRA_STATES.state5.includes(type) ? t.state5 || '' : '',
         });
     }
 
@@ -2664,6 +2699,287 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                     </div>
                 );
             }
+            case 'map':
+            case 'camera': {
+                const camera = t.type === 'camera';
+                return (
+                    <div style={{ ...body, padding: 0, gap: 0 }}>
+                        {t.label || t.icon ? (
+                            <div style={{ padding: `${px(4 * cqmin)}px ${px(6 * cqmin)}px ${px(3 * cqmin)}px` }}>
+                                {head}
+                            </div>
+                        ) : null}
+                        <div
+                            style={{
+                                flex: 1,
+                                minHeight: 0,
+                                position: 'relative',
+                                background: camera
+                                    ? '#0b0f13'
+                                    : 'linear-gradient(135deg, #aad3df 0 55%, #f2efe9 55% 100%)',
+                                display: 'grid',
+                                placeItems: 'center',
+                            }}
+                        >
+                            {camera ? (
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width={px(clamp(20, 22 * cqmin, 80))}
+                                    height={px(clamp(20, 22 * cqmin, 80))}
+                                >
+                                    <path
+                                        d={mdiCctv}
+                                        fill={TAB.muted}
+                                    />
+                                </svg>
+                            ) : (
+                                <svg
+                                    viewBox="-12 -14 24 26"
+                                    width={px(clamp(16, 14 * cqmin, 48))}
+                                    height={px(clamp(16, 14 * cqmin, 48))}
+                                >
+                                    <path
+                                        d="M0 -14 L9 10 L0 5 L-9 10 Z"
+                                        fill={accent}
+                                        stroke="#fff"
+                                        strokeWidth={2}
+                                    />
+                                </svg>
+                            )}
+                            {camera ? null : (
+                                <span
+                                    style={{
+                                        position: 'absolute',
+                                        right: 0,
+                                        bottom: 0,
+                                        fontSize: px(10),
+                                        padding: '0 4px',
+                                        background: 'rgba(255,255,255,0.75)',
+                                        color: '#333',
+                                    }}
+                                >
+                                    © OpenStreetMap
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+            case 'flow': {
+                const titleHead =
+                    t.title || t.icon ? (
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4em',
+                                minWidth: 0,
+                                fontSize: px(headFont),
+                                color: TAB.muted,
+                            }}
+                        >
+                            {t.icon ? (
+                                <TileIcon
+                                    name={t.icon}
+                                    size={px(headFont * 1.5)}
+                                    color={TAB.muted}
+                                />
+                            ) : null}
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {t.title}
+                            </span>
+                        </div>
+                    ) : null;
+                const value = (id: string | undefined): number | null => {
+                    const v = id ? this.state.values[id] : undefined;
+                    return typeof v === 'number' ? v : null;
+                };
+                const power = (v: number | null): string =>
+                    v === null
+                        ? '–'
+                        : Math.abs(v) >= 1000
+                          ? `${fmt(Math.abs(v) / 1000, 1)} kW`
+                          : `${fmt(Math.abs(v), 0)} W`;
+                const parts = FLOW_PARTS.slice(0, 4).filter(([s], i) => i === 3 || !!t[s]);
+                const spots = [
+                    [18, 22],
+                    [18, 68],
+                    [82, 22],
+                    [82, 68],
+                ];
+                return (
+                    <div style={body}>
+                        {titleHead}
+                        <svg
+                            viewBox="0 0 100 100"
+                            preserveAspectRatio="none"
+                            style={{ flex: 1, minHeight: 0, width: '100%' }}
+                        >
+                            {parts.map(([s, , , color]) => {
+                                const [x, y] = spots[FLOW_PARTS.findIndex(p => p[0] === s)];
+                                return (
+                                    <line
+                                        key={s}
+                                        x1={x}
+                                        y1={y}
+                                        x2={50}
+                                        y2={45}
+                                        stroke={color}
+                                        strokeOpacity={0.6}
+                                        strokeWidth={1}
+                                        vectorEffect="non-scaling-stroke"
+                                    />
+                                );
+                            })}
+                        </svg>
+                        {parts.map(([s, l, key, color, icon]) => {
+                            const [x, y] = spots[FLOW_PARTS.findIndex(p => p[0] === s)];
+                            const r = clamp(10, 9 * cqmin, 44);
+                            return (
+                                <div
+                                    key={s}
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${x}%`,
+                                        top: `${y}%`,
+                                        transform: 'translate(-50%, -50%)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        fontSize: px(clamp(9, 5 * cqmin, 18)),
+                                        color: TAB.text,
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            width: px(r * 2),
+                                            height: px(r * 2),
+                                            borderRadius: '50%',
+                                            border: `2px solid ${color}`,
+                                            background: TAB.screen,
+                                            display: 'grid',
+                                            placeItems: 'center',
+                                        }}
+                                    >
+                                        {icon ? (
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                width={px(r * 1.1)}
+                                                height={px(r * 1.1)}
+                                            >
+                                                <path
+                                                    d={icon}
+                                                    fill={color}
+                                                />
+                                            </svg>
+                                        ) : (
+                                            <TileIcon
+                                                name="battery"
+                                                size={px(r * 1.1)}
+                                                color={color}
+                                            />
+                                        )}
+                                    </div>
+                                    <b>{power(s === 'state4' && !t.state4 ? null : value(t[s]))}</b>
+                                    <span style={{ color: TAB.muted }}>
+                                        {(l && t[l]) || I18n.t(FLOW_NAMES[key] || key)}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            }
+            case 'trend': {
+                const titleHead =
+                    t.title || t.icon ? (
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4em',
+                                minWidth: 0,
+                                fontSize: px(headFont),
+                                color: TAB.muted,
+                            }}
+                        >
+                            {t.icon ? (
+                                <TileIcon
+                                    name={t.icon}
+                                    size={px(headFont * 1.5)}
+                                    color={TAB.muted}
+                                />
+                            ) : null}
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {t.title}
+                            </span>
+                        </div>
+                    ) : null;
+                const rows = (['state', 'state2', 'state3', 'state4'] as const).filter(s => !!t[s]);
+                return (
+                    <div style={body}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6em' }}>
+                            {titleHead}
+                            <span
+                                style={{
+                                    marginLeft: 'auto',
+                                    display: 'flex',
+                                    gap: 3,
+                                    fontSize: px(clamp(9, 6 * cqmin, 16)),
+                                    color: TAB.muted,
+                                }}
+                            >
+                                {['6h', '24h', '7d', '30d'].map(c => (
+                                    <span
+                                        key={c}
+                                        style={{
+                                            padding: '0 5px',
+                                            borderRadius: 99,
+                                            border: `1px solid ${TAB.track}`,
+                                            background: c === '24h' ? accent : undefined,
+                                            color: c === '24h' ? '#fff' : undefined,
+                                        }}
+                                    >
+                                        {c}
+                                    </span>
+                                ))}
+                            </span>
+                        </div>
+                        <svg
+                            viewBox="0 0 100 40"
+                            preserveAspectRatio="none"
+                            style={{ flex: 1, minHeight: 0, width: '100%' }}
+                        >
+                            {[10, 20, 30].map(y => (
+                                <line
+                                    key={y}
+                                    x1={0}
+                                    x2={100}
+                                    y1={y}
+                                    y2={y}
+                                    stroke={TAB.track}
+                                    strokeWidth={0.5}
+                                    vectorEffect="non-scaling-stroke"
+                                />
+                            ))}
+                            {rows.map((s, i) => (
+                                <polyline
+                                    key={s}
+                                    fill="none"
+                                    stroke={i === 0 ? accent : SERIES_COLORS[i]}
+                                    strokeWidth={2}
+                                    vectorEffect="non-scaling-stroke"
+                                    points={Array.from({ length: 21 }, (_v, k) => {
+                                        const y = 20 + 12 * Math.sin(k / 3 + i * 1.7) * (1 - i * 0.2);
+                                        return `${k * 5},${y.toFixed(1)}`;
+                                    }).join(' ')}
+                                />
+                            ))}
+                        </svg>
+                    </div>
+                );
+            }
             default:
                 return (
                     <div style={body}>
@@ -2971,6 +3287,130 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
         );
     }
 
+    /** The parts of a flow: solar, battery, grid, consumption with their names, and the charge of the battery */
+    renderFlowParts(index: number, t: TileRow): React.JSX.Element {
+        return (
+            <>
+                <TextField
+                    variant="standard"
+                    label={I18n.t('sd_title')}
+                    value={t.title || ''}
+                    slotProps={{ htmlInput: { maxLength: 24 } }}
+                    onChange={e => this.update(index, { title: e.target.value })}
+                />
+                {FLOW_PARTS.map(([s, l, key, color]) => (
+                    <Box
+                        key={s}
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.5,
+                            pl: 1,
+                            borderLeft: `2px solid ${color}`,
+                        }}
+                    >
+                        {this.renderStateField(index, t, s, key)}
+                        {l && t[s] ? (
+                            <TextField
+                                variant="standard"
+                                label={I18n.t('sd_label')}
+                                placeholder={I18n.t(FLOW_NAMES[key] || key)}
+                                value={t[l] || ''}
+                                slotProps={{ htmlInput: { maxLength: 24 } }}
+                                onChange={e => this.update(index, { [l]: e.target.value })}
+                            />
+                        ) : null}
+                    </Box>
+                ))}
+                <Typography
+                    variant="caption"
+                    sx={{ opacity: 0.7 }}
+                >
+                    {I18n.t('sd_flow_hint')}
+                </Typography>
+            </>
+        );
+    }
+
+    /** Position, course and speed of a map, the nmea instance of its AIS targets and anchor, its tile servers */
+    renderMapFields(index: number, t: TileRow): React.JSX.Element {
+        return (
+            <>
+                {this.renderStateField(index, t, 'state', 'sd_map_lat')}
+                {this.renderStateField(index, t, 'state2', 'sd_map_lon')}
+                {this.renderStateField(index, t, 'state3', 'sd_map_course')}
+                {this.renderStateField(index, t, 'state4', 'sd_map_speed')}
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                    <TextField
+                        variant="standard"
+                        sx={{ flex: 1 }}
+                        label={I18n.t('sd_map_nmea')}
+                        placeholder="nmea.0"
+                        value={t.nmea || ''}
+                        onChange={e => this.update(index, { nmea: e.target.value.trim() })}
+                    />
+                    <TextField
+                        variant="standard"
+                        type="number"
+                        sx={{ width: 110 }}
+                        label={I18n.t('sd_map_hours')}
+                        placeholder="24"
+                        value={t.hours ?? ''}
+                        slotProps={{ htmlInput: { min: 1, max: 720 } }}
+                        onChange={e =>
+                            this.update(index, { hours: e.target.value === '' ? '' : Number(e.target.value) })
+                        }
+                    />
+                </Box>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={!!t.seamarks}
+                            onChange={e => this.update(index, { seamarks: e.target.checked })}
+                        />
+                    }
+                    label={I18n.t('sd_map_seamarks')}
+                />
+                <TextField
+                    variant="standard"
+                    label={I18n.t('sd_map_tiles')}
+                    placeholder="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    value={t.url || ''}
+                    onChange={e => this.update(index, { url: e.target.value.trim() })}
+                />
+            </>
+        );
+    }
+
+    /** The picture of a camera: its address (or a state holding one) and how often it is fetched */
+    renderCameraFields(index: number, t: TileRow): React.JSX.Element {
+        return (
+            <>
+                <TextField
+                    variant="standard"
+                    label={I18n.t('sd_camera_url')}
+                    placeholder="http://192.168.1.10:5000/api/cam/latest.jpg"
+                    value={t.url || ''}
+                    helperText={I18n.t('sd_camera_url_hint')}
+                    onChange={e => this.update(index, { url: e.target.value.trim() })}
+                />
+                {this.renderStateField(index, t, 'state', 'sd_camera_state')}
+                <TextField
+                    variant="standard"
+                    type="number"
+                    label={I18n.t('sd_camera_interval')}
+                    placeholder="5"
+                    value={t.interval ?? ''}
+                    helperText={I18n.t('sd_camera_interval_hint')}
+                    slotProps={{ htmlInput: { min: 0, max: 3600 } }}
+                    onChange={e =>
+                        this.update(index, { interval: e.target.value === '' ? '' : Number(e.target.value) })
+                    }
+                />
+            </>
+        );
+    }
+
     /** The second state of a level (its amount) or a battery (its power) with its unit in one line */
     renderSecondAmount(index: number, t: TileRow, label: string): React.JSX.Element {
         return (
@@ -3007,6 +3447,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
         const tiles = this.tiles();
         const num = (v: string): number | '' => (v === '' ? '' : Number(v));
         const scaled =
+            t.type === 'trend' ||
             t.type === 'gauge' ||
             t.type === 'bar' ||
             t.type === 'chart' ||
@@ -3059,14 +3500,16 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                     value={t.type}
                     onChange={e => this.changeKind(index, e.target.value as Kind)}
                 >
-                    {(Object.keys(KINDS) as Kind[]).map(k => (
-                        <MenuItem
-                            key={k}
-                            value={k}
-                        >
-                            {I18n.t(KIND_KEYS[k])}
-                        </MenuItem>
-                    ))}
+                    {(Object.keys(KINDS) as Kind[])
+                        .filter(k => k === t.type || !TABLET_KINDS.includes(k) || this.isTablet(t.satellite))
+                        .map(k => (
+                            <MenuItem
+                                key={k}
+                                value={k}
+                            >
+                                {I18n.t(KIND_KEYS[k])}
+                            </MenuItem>
+                        ))}
                 </TextField>
                 {newKind && !this.isTablet(t.satellite) ? (
                     <Typography
@@ -3114,15 +3557,20 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                         ))}
                     </ToggleButtonGroup>
                 </Box>
-                {t.type === 'group' ? this.renderGroupRows(index, t) : null}
-                {t.type === 'group' ? null : this.renderStateField(index, t, 'state', stateLabel)}
+                {t.type === 'group' || t.type === 'trend' ? this.renderGroupRows(index, t) : null}
+                {t.type === 'flow' ? this.renderFlowParts(index, t) : null}
+                {t.type === 'map' ? this.renderMapFields(index, t) : null}
+                {t.type === 'camera' ? this.renderCameraFields(index, t) : null}
+                {['group', 'trend', 'flow', 'map', 'camera'].includes(t.type)
+                    ? null
+                    : this.renderStateField(index, t, 'state', stateLabel)}
                 {t.type === 'dimmer' ? this.renderStateField(index, t, 'state2', 'sd_onoff_state') : null}
                 {t.type === 'thermostat' ? this.renderStateField(index, t, 'state2', 'sd_target_state') : null}
                 {t.type === 'thermostat' ? this.renderStateField(index, t, 'state3', 'sd_relay_state') : null}
                 {t.type === 'level' ? this.renderSecondAmount(index, t, 'sd_amount_state') : null}
                 {t.type === 'battery' ? this.renderSecondAmount(index, t, 'sd_power_state') : null}
                 {t.type === 'battery' ? this.renderStateField(index, t, 'state3', 'sd_charging_state') : null}
-                <Box sx={{ display: t.type === 'group' ? 'none' : 'flex', gap: 1 }}>
+                <Box sx={{ display: TITLE_KINDS.includes(t.type) ? 'none' : 'flex', gap: 1 }}>
                     <TextField
                         variant="standard"
                         sx={{ flex: 2 }}
@@ -3132,7 +3580,11 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                         slotProps={{ htmlInput: { maxLength: 24 } }}
                         onChange={e => this.update(index, { label: e.target.value })}
                     />
-                    {t.type !== 'dimmer' && t.type !== 'button' && t.type !== 'switch' ? (
+                    {t.type !== 'dimmer' &&
+                    t.type !== 'button' &&
+                    t.type !== 'switch' &&
+                    t.type !== 'map' &&
+                    t.type !== 'camera' ? (
                         <TextField
                             variant="standard"
                             sx={{ flex: 1 }}
@@ -3180,7 +3632,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                         label={I18n.t('sd_hide_toggle')}
                     />
                 ) : null}
-                {t.icon && t.type !== 'button' && t.size !== 'q' && !newKind ? (
+                {t.icon && t.type !== 'button' && t.size !== 'q' && !newKind && !TABLET_KINDS.includes(t.type) ? (
                     <FormControlLabel
                         control={
                             <Checkbox

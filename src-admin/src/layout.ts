@@ -94,7 +94,7 @@ export function tabletGrid(row: {
     };
 }
 
-export type Size = 's' | 'q' | 'w' | 'l';
+export type Size = 's' | 'q' | 'w' | 'l' | 'x' | 'f';
 export type Kind =
     | 'value'
     | 'gauge'
@@ -107,10 +107,21 @@ export type Kind =
     | 'group'
     | 'level'
     | 'battery'
-    | 'status';
+    | 'status'
+    | 'map'
+    | 'flow'
+    | 'trend'
+    | 'camera';
 
-/** Cells (columns, rows) of each size */
-export const SIZES: Record<Size, [number, number]> = { s: [1, 1], q: [1, 2], w: [2, 1], l: [2, 2] };
+/** Cells (columns, rows) of each size; x and f only on a tablet */
+export const SIZES: Record<Size, [number, number]> = {
+    s: [1, 1],
+    q: [1, 2],
+    w: [2, 1],
+    l: [2, 2],
+    x: [3, 2],
+    f: [4, 3],
+};
 
 /** The sizes each kind comes in */
 export const KINDS: Record<Kind, Size[]> = {
@@ -126,16 +137,27 @@ export const KINDS: Record<Kind, Size[]> = {
     level: ['q', 'l'],
     battery: ['s', 'q', 'w', 'l'],
     status: ['s', 'q', 'w'],
+    map: [],
+    flow: [],
+    trend: [],
+    camera: [],
 };
+
+/** The kinds only a tablet draws (lib/layout.js TABLET_TYPES): a satellite has none of them */
+export const TABLET_KINDS: Kind[] = ['map', 'flow', 'trend', 'camera'];
+
+/** The kinds with a title over their rows rather than a name of their own (lib/layout.js TITLE_TYPES) */
+export const TITLE_KINDS: Kind[] = ['group', 'flow', 'trend'];
 
 /** The kinds of the satellite firmware 2.3.0: an older one leaves them out (lib/layout.js ITEM_TYPES) */
 export const FIRMWARE_230_KINDS: Kind[] = ['group', 'level', 'battery', 'status'];
 
-/** Which of the states 2-4 a kind takes (lib/layout.js EXTRA_STATES) */
-export const EXTRA_STATES: Record<'state2' | 'state3' | 'state4', Kind[]> = {
-    state2: ['dimmer', 'thermostat', 'group', 'level', 'battery'],
-    state3: ['thermostat', 'group', 'battery'],
-    state4: ['group'],
+/** Which of the states 2-5 a kind takes (lib/layout.js EXTRA_STATES) */
+export const EXTRA_STATES: Record<'state2' | 'state3' | 'state4' | 'state5', Kind[]> = {
+    state2: ['dimmer', 'thermostat', 'group', 'level', 'battery', 'map', 'flow', 'trend'],
+    state3: ['thermostat', 'group', 'battery', 'map', 'flow', 'trend'],
+    state4: ['group', 'map', 'flow', 'trend'],
+    state5: ['flow'],
 };
 
 /** Icons the firmware has (components/tiles/tiles.cpp of the satellite firmware) */
@@ -194,8 +216,20 @@ export interface TileRow {
     state: string;
     state2: string;
     state3?: string;
-    /** The fourth row of a group */
+    /** The fourth row of a group, the speed of a map, the consumption of a flow */
     state4?: string;
+    /** The state of charge of the battery of a flow */
+    state5?: string;
+    /** Tile servers of a map ({z}/{x}/{y}, empty = OpenStreetMap), picture or stream of a camera */
+    url?: string;
+    /** Instance of ioBroker.nmea whose AIS targets and anchor a map shows */
+    nmea?: string;
+    /** A map shows the seamarks of OpenSeaMap */
+    seamarks?: boolean;
+    /** Hours of the track of a map, the period a trend opens with */
+    hours?: number | '' | null;
+    /** Seconds between two pictures of a camera, 0 = live stream */
+    interval?: number | '' | null;
     /** The heading of a group (its label is the name of its first row) */
     title?: string;
     /** Names and units of state2-4: the rows of a group, the amount of a level, the power of a battery */
@@ -271,7 +305,7 @@ export function sizesOf(type: Kind, tablet = false): Size[] {
     if (!KINDS[type]) {
         return [];
     }
-    return tablet ? ['s', 'q', 'w', 'l'] : KINDS[type];
+    return tablet ? ['s', 'q', 'w', 'l', 'x', 'f'] : KINDS[type];
 }
 
 /**
@@ -279,8 +313,14 @@ export function sizesOf(type: Kind, tablet = false): Size[] {
  * marked: it is being set up.
  */
 export function problemOf(t: TileRow, tablet = false): string {
+    if (TABLET_KINDS.includes(t.type) && !tablet) {
+        return 'sd_tablet_only';
+    }
     if (!sizesOf(t.type, tablet).includes(t.size)) {
         return 'sd_bad_size';
+    }
+    if (t.type === 'map' && String(t.state || '').trim() && !String(t.state2 || '').trim()) {
+        return 'sd_need_longitude';
     }
     if (t.type === 'thermostat' && !String(t.state2 || '').trim()) {
         return 'sd_need_target';

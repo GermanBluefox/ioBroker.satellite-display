@@ -56,6 +56,16 @@ to 8 tiles. Swipe left from the clock to reach them; a page without tiles is ski
 | Battery          | name, a battery filled along the scale, a bolt while charging, optional the power | all                 | –                                  |
 | Status           | icon, name, a value or a text; the icon and the tile light up while on            | small, square, wide | –                                  |
 
+Four more kinds are drawn by **tablets only** (the web app and the ioBroker Visu app; a satellite leaves them out
+with a warning). A tablet has two more sizes for them: 3 × 2 and 4 × 3 cells.
+
+| Kind          | Shows                                                                                                | A touch                               |
+| ------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Map           | OpenStreetMap with the boat, its course and its track; optional AIS targets, anchor circle, seamarks | pan, pinch, + −, back to the boat     |
+| Energy flow   | solar, battery, grid and consumption around the inverter, dots running with the power                | –                                     |
+| History chart | up to 4 series over hours or days from the history adapter, with axes                                | the period; a finger shows the values |
+| Camera        | the picture of a camera, refreshed every few seconds, or its live stream (MJPEG)                     | the picture on the whole screen       |
+
 ## Settings
 
 1. **Satellites:** name (room), IP address and API port (6053) of each satellite. An API encryption key is only needed
@@ -108,6 +118,24 @@ Details of the kinds:
       threshold says otherwise.
     - A status lights up while its state is on (`true`, a number other than 0, "on" …) and shows the text of
       `common.states`, an/aus, or the number with its unit.
+- **Map** (tablet): latitude and longitude (required), course or heading in degrees and the speed in knots
+  (optional). The adapter records the track (a point every 20 m, the hours of the tile, 24 by default) also while the
+  tablet is away and keeps it over a restart. With the instance of ioBroker.nmea (e.g. `nmea.0`) the map shows the
+  AIS targets around (the nearest 100, without our own boat) and the circle of the anchor alarm. Tiles of
+  OpenStreetMap, as its [tile usage policy](https://operations.osmfoundation.org/policies/tiles/) allows for light use
+  with the attribution shown; other tile servers can be set (`{z}/{x}/{y}`), and the seamarks of OpenSeaMap
+  switched on.
+- **Energy flow** (tablet): solar power, battery power (positive = charging), grid or shore power (positive =
+  taken), consumption and the charge of the battery, each optional. A power in kW is converted to W; without a state
+  of its own the consumption is computed (solar + grid − battery).
+- **History chart** (tablet): the history of each series from the history instance of the tab **Charts**
+  (history, sql or influxdb), 300 points, read again every 10 minutes and when the period is switched on the
+  tablet (1 h, 6 h, 24 h, 7 d, 30 d). Series with two units get an axis each.
+- **Camera** (tablet): the address of a picture (e.g. Frigate `http://…:5000/api/<camera>/latest.jpg?h=480`) or of
+  an MJPEG stream (`…/api/<camera>?fps=5&h=480`, refresh 0), or a state holding such an address (also a
+  `data:image/…` URL). The adapter fetches the picture and hands it to the tablet: the address, with a user and
+  password in it, never leaves ioBroker. A picture is fetched only while its page is on screen; at most 4 live
+  streams per tablet.
 - A value that is no number (text, `true`/`false`) shows as text on a value tile. When the object of the state has
   `common.states` (e.g. `0: Aus, 1: Heizen, 2: Kühlen`), the value tile shows that text instead of the number.
 
@@ -182,6 +210,8 @@ a tablet the same way, and `getTiles` names the grid of every display. The scree
   old name with "Move to ..." and "Delete these tiles".
 - The port is declared in the registry of used resources of js-controller 8, so the admin can show it as taken.
 - The tile editor of the admin shows the tablets next to the satellites, on the grid of each.
+- **Pages**: a swipe turns the page, and so does a tap on a dot in the bar (needed on a page that a map fills, where a
+  swipe moves the map). After a minute without a touch the tablet goes back to its first page.
 - **Clock when idle** (tab **Tablets**, off by default): after the set minutes without a touch the tablets show the
   time and the date, as a satellite shows its clock. A touch shows the keypad of the screen lock, or the tiles when the
   tablet is not locked. With the lock mode "when the display goes back to the clock" the tablet locks when its clock
@@ -285,6 +315,12 @@ Older changes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
   (an icon that lights up while on); the tile editor draws them, the commands `addTile`/`updateTile` take them
 - (GermanBluefox) Tablet web app: the name of a value tile is no longer bold, and the toggle of a wide switch sits in
   the middle of its line instead of half cut off at the bottom edge
+- (GermanBluefox) Four tile types for tablets only: map (OpenStreetMap with the boat, its track, AIS targets and the
+  anchor circle of ioBroker.nmea, seamarks of OpenSeaMap), energy flow (solar, battery, grid, consumption), history
+  chart (up to four series with axes, the period switched on the tablet) and camera (a picture or an MJPEG stream,
+  fetched by the adapter, so the address with its password stays in ioBroker); two more sizes on a tablet, 3 × 2 and
+  4 × 3
+- (GermanBluefox) Tablet web app: a tap on a page dot in the bar goes to that page
 
 ### 0.4.0 (2026-11-16)
 

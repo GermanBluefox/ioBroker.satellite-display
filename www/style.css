@@ -86,19 +86,33 @@ body {
     color: var(--text);
 }
 
+/* a tap on a dot goes to its page: each dot is a button the width of a fingertip and the height of the bar */
 #dots {
     display: flex;
-    gap: 6px;
+    align-self: stretch;
 }
 
-#dots i {
+#dots button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(26px, 4.5vmin, 44px);
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#dots button::before {
+    content: '';
     width: 7px;
     height: 7px;
     border-radius: 50%;
     background: var(--track);
 }
 
-#dots i.on {
+#dots button.on::before {
     background: var(--text);
 }
 
@@ -910,4 +924,280 @@ input.level::-moz-range-thumb {
 
 .keys button.blank {
     visibility: hidden;
+}
+
+/* ---- the tiles only a tablet draws: map, flow, trend, camera ---- */
+
+.body.flush {
+    padding: 0;
+    gap: 0;
+}
+
+.body.flush > .head {
+    flex: none;
+    padding: 4cqmin 6cqmin 3cqmin;
+}
+
+.map,
+.camera {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: #0b0f13;
+}
+
+/* a finger on the map pans and zooms it, it never turns the page */
+.map {
+    touch-action: none;
+    cursor: grab;
+}
+
+.map .layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.map .layer img {
+    position: absolute;
+    max-width: none;
+    user-select: none;
+}
+
+.map canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.mapEmpty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--text);
+    font-size: clamp(12px, 6cqmin, 24px);
+    text-shadow: 0 1px 3px #000;
+    pointer-events: none;
+}
+
+.mapChip {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(16, 20, 24, 0.85);
+    color: var(--text);
+    font-size: clamp(11px, 5cqmin, 20px);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+.mapChip.hidden,
+.head .speed.hidden {
+    display: none;
+}
+
+.head .speed {
+    margin-left: auto;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.mapButtons {
+    position: absolute;
+    right: 8px;
+    bottom: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mapButton {
+    width: clamp(30px, 10cqmin, 48px);
+    height: clamp(30px, 10cqmin, 48px);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(16, 20, 24, 0.85);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+}
+
+.mapButton .icon {
+    width: 60%;
+    height: 60%;
+}
+
+.mapButton.on {
+    color: var(--c);
+}
+
+.map .credit {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 1px 5px;
+    border-top-left-radius: 4px;
+    background: rgba(255, 255, 255, 0.75);
+    color: #333;
+    font-size: 10px;
+    pointer-events: none;
+}
+
+/* a small map has no room for its buttons: it still pans and pinches */
+@container (max-width: 180px) {
+    .mapButtons {
+        display: none;
+    }
+}
+
+.tile.flow svg.flow {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+.flowNode {
+    fill: var(--bg);
+    stroke-width: 2;
+}
+
+.flowMid {
+    fill: var(--tile-on);
+    stroke: var(--muted);
+    stroke-width: 1.5;
+}
+
+.flowIcon {
+    fill: var(--muted);
+}
+
+.flowLine {
+    stroke-width: 2;
+    opacity: 0.55;
+    fill: none;
+}
+
+.flowLine.idle {
+    opacity: 1;
+}
+
+.flowPower {
+    fill: var(--text);
+    font-weight: 600;
+    text-anchor: middle;
+    font-variant-numeric: tabular-nums;
+}
+
+.flowName {
+    fill: var(--muted);
+    text-anchor: middle;
+}
+
+.tile.trend .legend {
+    display: flex;
+    gap: 0.9em;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 0.85em;
+}
+
+.tile.trend .legend .serie {
+    display: flex;
+    gap: 0.3em;
+    align-items: baseline;
+    color: var(--text);
+}
+
+.tile.trend .legend .name {
+    color: var(--muted);
+}
+
+.tile.trend .chips {
+    display: flex;
+    flex: none;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.tile.trend .chip {
+    padding: 2px 8px;
+    border: 1px solid var(--track);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.8em;
+}
+
+.tile.trend .chip.on {
+    border-color: var(--c);
+    background: var(--c);
+    color: #fff;
+}
+
+.tile.trend canvas.trend {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    touch-action: none;
+}
+
+.camera img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.camera .off {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--muted);
+    font-size: clamp(11px, 7cqmin, 22px);
+}
+
+.camera .off[hidden] {
+    display: none;
+}
+
+.camera .off .icon {
+    width: 2.2em;
+    height: 2.2em;
+}
+
+#camFull {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    background: #000;
+}
+
+#camFull[hidden] {
+    display: none;
+}
+
+#camFull img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.mapEmpty[hidden] {
+    display: none;
 }
