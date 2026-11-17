@@ -15,6 +15,8 @@ const {
     backgroundOf,
     ALERT_COLOR,
     tileArgs,
+    itemsOf,
+    decimalsFor,
     mediaStateOf,
     showsChange,
 } = require('../../lib/values');
@@ -199,6 +201,73 @@ describe('values', () => {
         assert.equal(stateText(true, { states: { true: 'An', false: 'Aus' } }, 'de'), 'An');
         assert.equal(stateText('a', { states: ['a', 'b'] }, 'de'), null);
         assert.equal(stateText(1, {}, 'de'), null);
+    });
+
+    it('makes the rows of a group from the states that are set, named after their objects', () => {
+        const objects = {
+            'a.0.out': { common: { name: { en: 'Outside', de: 'Draußen' }, unit: '°C' } },
+            'a.0.in': { common: { name: 'Innen', unit: '°C' } },
+            'a.0.door': { common: { name: 'Tür', states: { 0: 'Zu', 1: 'Offen' } } },
+        };
+        const items = itemsOf(
+            tile({
+                type: 'group',
+                state: 'a.0.out',
+                state2: '',
+                state3: 'a.0.in',
+                state4: 'a.0.door',
+                label3: 'Wohnzimmer mit einem viel zu langen Namen',
+                unit: 'K',
+            }),
+            id => objects[id],
+            'de',
+        );
+        assert.deepEqual(items, [
+            { index: 0, state: 'a.0.out', label: 'Draußen', unit: 'K', decimals: 1 },
+            { index: 1, state: 'a.0.in', label: 'Wohnzimmer mit einem vie', unit: '°C', decimals: 1 },
+            { index: 2, state: 'a.0.door', label: 'Tür', unit: '', decimals: 0 },
+        ]);
+        const fixed = itemsOf(tile({ type: 'group', decimals: 2 }), () => null, 'de');
+        assert.deepEqual(fixed, [
+            { index: 0, state: 'hm.0.room.TEMPERATURE', label: 'TEMPERATURE', unit: '', decimals: 2 },
+        ]);
+    });
+
+    it('gives a level its amount and a battery its power as item 1, without a name', () => {
+        const objects = {
+            'a.0.litres': { common: { name: 'Liter', unit: 'l' } },
+            'a.0.power': { common: { unit: 'W' } },
+        };
+        const level = itemsOf(tile({ type: 'level', state2: 'a.0.litres' }), id => objects[id], 'de');
+        assert.deepEqual(level, [{ index: 1, state: 'a.0.litres', label: '', unit: 'l', decimals: 1 }]);
+        const battery = itemsOf(tile({ type: 'battery', state2: 'a.0.power', decimals: 2 }), id => objects[id], 'de');
+        assert.deepEqual(battery, [{ index: 1, state: 'a.0.power', label: '', unit: 'W', decimals: 0 }]);
+        assert.deepEqual(
+            itemsOf(tile({ type: 'level' }), () => null, 'de'),
+            [],
+        );
+        assert.deepEqual(
+            itemsOf(tile({ type: 'value', state2: 'a.0.litres' }), id => objects[id], 'de'),
+            [],
+        );
+    });
+
+    it('shows temperatures, voltages and energy with one decimal, the rest without', () => {
+        assert.equal(decimalsFor('°C'), 1);
+        assert.equal(decimalsFor('kWh'), 1);
+        assert.equal(decimalsFor('W'), 0);
+        assert.equal(decimalsFor('%'), 0);
+        assert.equal(decimalsFor(''), 0);
+    });
+
+    it('names a group after its title and leaves the unit out of it', () => {
+        const obj = { common: { name: 'Draußen', unit: '°C' } };
+        const args = tileArgs(tile({ type: 'group', title: 'Temperaturen' }), obj, 'de');
+        assert.equal(args.label, 'Temperaturen');
+        assert.equal(args.unit, '');
+        assert.equal(tileArgs(tile({ type: 'group' }), obj, 'de').label, '');
+        const level = tileArgs(tile({ type: 'level', size: 'q' }), { common: { name: 'Diesel', unit: '%' } }, 'de');
+        assert.deepEqual([level.label, level.unit, level.min, level.max], ['Diesel', '%', 0, 100]);
     });
 
     it('puts a setpoint on the grid of its step and into the range of the object', () => {

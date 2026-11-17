@@ -18,7 +18,7 @@ const {
 } = require('../../lib/layout');
 const { runCommand } = require('../../lib/commands');
 const { TabletLink, parseInput, TABLET_ACTIONS } = require('../../lib/tablet');
-const { TabletServer, fileOf, redirectOf } = require('../../lib/tablet-server');
+const { TabletServer, fileOf, redirectOf, lanAddressOf } = require('../../lib/tablet-server');
 const { decideTls } = require('../../lib/tls');
 
 const SATS = [{ enabled: true, name: 'Gast', host: '192.168.1.246' }];
@@ -363,6 +363,10 @@ describe('tablets: TabletLink', () => {
             assert.ok(!link.has(name), name);
         }
         assert.ok(TABLET_ACTIONS.includes('lock_set'));
+        // the tile types of the firmware 2.2.0: a tablet always has them
+        for (const name of ['tile_item', 'tile_item_value', 'tile_item_text', 'tile_item_color']) {
+            assert.ok(link.has(name), name);
+        }
     });
 
     it('passes on touches and the screen lock, checked against its grid', () => {
@@ -559,6 +563,11 @@ describe('tablets: TabletServer', () => {
         await lost;
     });
 
+    it('refuses a pairing when the adapter does not pair', async () => {
+        const res = await fetch(`http://127.0.0.1:${port}/pair`, { method: 'POST', body: '{}' });
+        assert.equal(res.status, 405);
+    });
+
     it('a second server on the same port fails with an error and does not throw', async () => {
         const other = new TabletServer({
             root,
@@ -568,6 +577,109 @@ describe('tablets: TabletServer', () => {
         });
         await assert.rejects(other.start({ port, bind: '127.0.0.1' }), /EADDRINUSE/);
         other.stop();
+    });
+});
+
+describe('tablets: pairing over the web server', () => {
+    /** @type {TabletServer} */
+    let server;
+    /** @type {number} */
+    let port;
+    /** @type {{request: Record<string, unknown>, from: string}[]} */
+    let asked;
+    const timers = { setInterval: () => null, clearInterval: () => undefined };
+
+    beforeEach(async () => {
+        asked = [];
+        server = new TabletServer({
+            root: os.tmpdir(),
+            linkOf: () => null,
+            timers,
+            log: { debug: () => undefined, info: () => undefined },
+            onPair: async (request, from) => {
+                asked.push({ request, from });
+                return request.code === 'good'
+                    ? { status: 200, body: { name: 'Flur', path: '/t/k/' } }
+                    : { status: 403, body: { error: 'code' } };
+            },
+        });
+        ({ port } = await server.start({ port: 0, bind: '127.0.0.1' }));
+    });
+
+    afterEach(() => server.stop());
+
+    /**
+     * @param {string} body - Body of the request
+     * @returns {Promise<Response>} The answer
+     */
+    const post = body =>
+        fetch(`http://127.0.0.1:${port}/pair`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+        });
+
+    it('passes the request of the tablet on and answers with JSON', async () => {
+        const res = await post(JSON.stringify({ code: 'good', name: 'Flur', width: 1280, height: 800 }));
+        assert.equal(res.status, 200);
+        assert.match(res.headers.get('content-type') || '', /application\/json/);
+        assert.equal(res.headers.get('cache-control'), 'no-store');
+        assert.deepEqual(await res.json(), { name: 'Flur', path: '/t/k/' });
+        assert.deepEqual(asked[0].request, { code: 'good', name: 'Flur', width: 1280, height: 800 });
+        assert.match(asked[0].from, /127\.0\.0\.1/);
+
+        const refused = await post(JSON.stringify({ code: 'bad' }));
+        assert.equal(refused.status, 403);
+        assert.deepEqual(await refused.json(), { error: 'code' });
+    });
+
+    it('refuses what is no pairing request, too much of it and other methods', async () => {
+        assert.equal((await post('not json')).status, 400);
+        assert.equal((await post('[1, 2]')).status, 400);
+        assert.equal((await post(JSON.stringify({ code: 'good', name: 'x'.repeat(5000) }))).status, 413);
+        assert.equal((await fetch(`http://127.0.0.1:${port}/pair`)).status, 405);
+        assert.equal(asked.length, 0, 'none of them reached the adapter');
+    });
+
+    it('explains the pairing link to a browser', async () => {
+        const res = await fetch(`http://127.0.0.1:${port}/pair/some-code`);
+        assert.equal(res.status, 200);
+        assert.match(res.headers.get('content-type') || '', /text\/html/);
+        assert.match(await res.text(), /ioBroker Visu app/);
+        assert.equal((await fetch(`http://127.0.0.1:${port}/pair/some-code`, { method: 'POST' })).status, 405);
+    });
+
+    it('answers 500 when the adapter fails', async () => {
+        server.onPair = async () => {
+            throw new Error('broken');
+        };
+        assert.equal((await post(JSON.stringify({ code: 'good' }))).status, 500);
+    });
+});
+
+describe('tablets: the address in the links', () => {
+    const v4 = (/** @type {string} */ address, internal = false) => ({ address, family: 'IPv4', internal });
+
+    it('is the LAN address, not the one of Tailscale that comes first in the list', () => {
+        assert.equal(
+            lanAddressOf({
+                lo: [v4('127.0.0.1', true)],
+                tailscale0: [v4('100.100.159.33'), { address: 'fd7a::1', family: 'IPv6', internal: false }],
+                br0: [v4('192.168.1.129')],
+            }),
+            '192.168.1.129',
+        );
+    });
+
+    it('passes over containers, VPNs and link-local addresses, and takes them when there is nothing else', () => {
+        assert.equal(
+            lanAddressOf({ docker0: [v4('172.17.0.1')], wg0: [v4('10.8.0.1')], eth0: [v4('10.0.0.5')] }),
+            '10.0.0.5',
+        );
+        assert.equal(lanAddressOf({ eth0: [v4('169.254.3.4')], ens3: [v4('203.0.113.7')] }), '203.0.113.7');
+        assert.equal(lanAddressOf({ tailscale0: [v4('100.64.0.2')] }), '100.64.0.2');
+        assert.equal(lanAddressOf({ lo: [v4('127.0.0.1', true)] }), null);
+        assert.equal(lanAddressOf(undefined), null);
     });
 });
 

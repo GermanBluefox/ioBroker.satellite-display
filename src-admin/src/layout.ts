@@ -95,7 +95,19 @@ export function tabletGrid(row: {
 }
 
 export type Size = 's' | 'q' | 'w' | 'l';
-export type Kind = 'value' | 'gauge' | 'bar' | 'chart' | 'switch' | 'dimmer' | 'button' | 'thermostat';
+export type Kind =
+    | 'value'
+    | 'gauge'
+    | 'bar'
+    | 'chart'
+    | 'switch'
+    | 'dimmer'
+    | 'button'
+    | 'thermostat'
+    | 'group'
+    | 'level'
+    | 'battery'
+    | 'status';
 
 /** Cells (columns, rows) of each size */
 export const SIZES: Record<Size, [number, number]> = { s: [1, 1], q: [1, 2], w: [2, 1], l: [2, 2] };
@@ -110,6 +122,20 @@ export const KINDS: Record<Kind, Size[]> = {
     dimmer: ['w', 'l'],
     button: ['s', 'q', 'w'],
     thermostat: ['q', 'l'],
+    group: ['s', 'q', 'w', 'l'],
+    level: ['q', 'l'],
+    battery: ['s', 'q', 'w', 'l'],
+    status: ['s', 'q', 'w'],
+};
+
+/** The kinds of the satellite firmware 2.2.0: an older one leaves them out (lib/layout.js ITEM_TYPES) */
+export const FIRMWARE_220_KINDS: Kind[] = ['group', 'level', 'battery', 'status'];
+
+/** Which of the states 2-4 a kind takes (lib/layout.js EXTRA_STATES) */
+export const EXTRA_STATES: Record<'state2' | 'state3' | 'state4', Kind[]> = {
+    state2: ['dimmer', 'thermostat', 'group', 'level', 'battery'],
+    state3: ['thermostat', 'group', 'battery'],
+    state4: ['group'],
 };
 
 /** Icons the firmware has (components/tiles/tiles.cpp of the satellite firmware) */
@@ -168,6 +194,17 @@ export interface TileRow {
     state: string;
     state2: string;
     state3?: string;
+    /** The fourth row of a group */
+    state4?: string;
+    /** The heading of a group (its label is the name of its first row) */
+    title?: string;
+    /** Names and units of state2-4: the rows of a group, the amount of a level, the power of a battery */
+    label2?: string;
+    label3?: string;
+    label4?: string;
+    unit2?: string;
+    unit3?: string;
+    unit4?: string;
     label: string;
     unit: string;
     icon: string;
@@ -215,7 +252,7 @@ export function cssColor(value: unknown): string {
 }
 
 /** The kinds that can turn red at a threshold (lib/layout.js ALERT_TYPES) */
-export const ALERT_KINDS: Kind[] = ['value', 'gauge', 'bar', 'chart', 'thermostat'];
+export const ALERT_KINDS: Kind[] = ['value', 'gauge', 'bar', 'chart', 'thermostat', 'group', 'level', 'battery'];
 
 /** True when the value is beyond a threshold of the tile (lib/values.js alertColor) */
 export function alerted(t: TileRow, value: number): boolean {

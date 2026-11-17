@@ -41,16 +41,20 @@ to 8 tiles. Swipe left from the clock to reach them; a page without tiles is ski
 | wide   | 2 × 1 | 308 × 52  |
 | large  | 2 × 2 | 308 × 111 |
 
-| Kind             | Shows                                                                           | Sizes               | A touch                            |
-| ---------------- | ------------------------------------------------------------------------------- | ------------------- | ---------------------------------- |
-| Value            | name, number with unit, or a text                                               | all                 | –                                  |
-| Gauge            | name, arc from the scale start to its end, number                               | square, large       | –                                  |
-| Value with bar   | name, number, bar along the scale                                               | all                 | –                                  |
-| Value with chart | name, number, line of the last 60 values                                        | small, wide, large  | –                                  |
-| Switch           | name, toggle; the tile lights up when on                                        | small, square, wide | toggles the state                  |
-| Dimmer           | name, toggle, slider, percent                                                   | wide, large         | toggle and slider write the states |
-| Button           | icon, name                                                                      | small, square, wide | writes `true` to the state         |
-| Thermostat       | name, arc with the current temperature, − target +, a dot for the heating relay | square, large       | − and + write the target           |
+| Kind             | Shows                                                                             | Sizes               | A touch                            |
+| ---------------- | --------------------------------------------------------------------------------- | ------------------- | ---------------------------------- |
+| Value            | name, number with unit, or a text                                                 | all                 | –                                  |
+| Gauge            | name, arc from the scale start to its end, number                                 | square, large       | –                                  |
+| Value with bar   | name, number, bar along the scale                                                 | all                 | –                                  |
+| Value with chart | name, number, line of the last 60 values                                          | small, wide, large  | –                                  |
+| Switch           | name, toggle; the tile lights up when on                                          | small, square, wide | toggles the state                  |
+| Dimmer           | name, toggle, slider, percent                                                     | wide, large         | toggle and slider write the states |
+| Button           | icon, name                                                                        | small, square, wide | writes `true` to the state         |
+| Thermostat       | name, arc with the current temperature, − target +, a dot for the heating relay   | square, large       | − and + write the target           |
+| Group            | up to 4 values in one tile, each with its name: rows when tall, columns when flat | all                 | –                                  |
+| Tank             | name, a tank filled along the scale, the value, optional a second amount (litres) | square, large       | –                                  |
+| Battery          | name, a battery filled along the scale, a bolt while charging, optional the power | all                 | –                                  |
+| Status           | icon, name, a value or a text; the icon and the tile light up while on            | small, square, wide | –                                  |
 
 ## Settings
 
@@ -85,7 +89,7 @@ Details of the kinds:
   switch with an icon and a name has no toggle: the whole tile is the switch and lights up when on; with only the
   icon it keeps the toggle. "The whole tile switches" sets this for every switch, the square one too. Needs the
   satellite firmware **2.0.4**.
-- **Thresholds:** value, gauge, bar, chart and thermostat tiles have "Red below" and "Red above": beyond them the
+- **Thresholds:** value, gauge, bar, chart, thermostat, group, tank and battery tiles have "Red below" and "Red above": beyond them the
   value and its arc, bar or line turn red, e.g. a battery below 20 %. Needs the satellite firmware **2.0.3**; an older
   one keeps the colours.
 - **Thermostat:** three states: the current temperature (the arc), the target temperature (written by − and +)
@@ -93,6 +97,17 @@ Details of the kinds:
   once by the step (0.5 unless set); one second after the last press the adapter writes it. The scale and the
   limits of the target come from the object of the target temperature (`min`/`max`), else 5-30. Needs the
   satellite firmware **2.0.1**; an older firmware is reported in the log and the tile is left out.
+- **Group, tank, battery, status:** need the satellite firmware **2.2.0**; an older firmware is reported in the log
+  and the tile is left out (a tablet always has them).
+    - A group shows the states 1-4, each with its own name and unit (empty: those of the object) and the decimals of
+      the tile; the title is an optional heading over the rows of a tall group. The thresholds colour each row.
+    - A tank shows its fill level along the scale (empty: that of the object, else 0-100) and, optional, a second state
+      below it, e.g. the litres. The thresholds colour the fill.
+    - A battery shows its state of charge and, optional, the power (second state). The bolt shows while it charges:
+      from its own state (third state) when set, else while the power is positive. Green unless a colour or a
+      threshold says otherwise.
+    - A status lights up while its state is on (`true`, a number other than 0, "on" …) and shows the text of
+      `common.states`, an/aus, or the number with its unit.
 - A value that is no number (text, `true`/`false`) shows as text on a value tile. When the object of the state has
   `common.states` (e.g. `0: Aus, 1: Heizen, 2: Kühlen`), the value tile shows that text instead of the number.
 
@@ -137,6 +152,15 @@ no port and creates no objects for tablets.
 3. Point the camera of the tablet at its code (or open the link there) and add the page to the home screen. It starts full screen, keeps the screen on (where
    the browser allows it) and connects again by itself after the tablet was asleep.
 
+**Pairing with the ioBroker Visu app (Android)**: instead of a row by hand, switch the web app on, save and press
+"Pair a tablet". The QR code it shows is a one-time link, valid for 10 minutes. In the ioBroker Visu app on the tablet
+(settings, tab App, satellite-display, "Scan") the tablet scans it, sends its name and its screen size in CSS pixels
+(e.g. 1280 x 800 for a 10" tablet in landscape), and the adapter enters it as a new row - an upright screen with the
+grid turned, 3 x 4 - saves the settings and restarts; the app gets the link of the tablet and connects. The settings
+page reloads by itself to show the new row (unless it holds changes that are not saved). Then give the tablet tiles in
+the tile editor. A name a satellite or a tablet already has gets a number. The pairing link opened in a browser only
+explains itself: a browser cannot pair.
+
 A tile names its tablet in the field "satellite" like a satellite; the commands for an AI agent (below) place tiles on
 a tablet the same way, and `getTiles` names the grid of every display. The screen lock with a PIN (tab **Tablets**,
 "Screen lock") works as on a satellite; the tablet checks the PIN itself.
@@ -179,6 +203,8 @@ Satellites and Tablets: add, remove and rename displays there. The tab works whi
   link" (asks first; the old link stops working at once, also on the home screen of the tablet).
 - **Details** (menu of the card): grid and pages, the number of tiles, and the link with the QR code of a tablet.
 - **Links of the tablets** in the bar above the cards: the QR codes of all tablets in one dialog.
+- **Pair a tablet** in the bar above the cards, while the web app runs: the one-time QR code of the pairing (see
+  Tablets).
 
 ## Commands (e.g. for an AI agent)
 
@@ -186,15 +212,15 @@ The tiles can also be changed with `sendTo('satellite-display.0', command, messa
 ("add a narrow switch for the light in the living room to the display of Gast"). The answers are short JSON; an error
 names what to ask the user (which satellite, which page when all are full).
 
-| Command        | Message                                                                                      | Does                                                                                         |
-| -------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `help`         | –                                                                                            | describes the commands, kinds, sizes, icons and the grid                                     |
-| `getTiles`     | `{satellite?}`                                                                               | lists the satellites and tablets, their grids, their tiles (with an `id`) and the free cells |
-| `addTile`      | `{satellite, type, state, size?, icon?, label?, unit?, state2?, state3?, page?, col?, row?}` | adds a tile, without a place in the first free cell; answers where it went                   |
-| `updateTile`   | `{id, ...fields}`                                                                            | changes a tile                                                                               |
-| `moveTile`     | `{id, page, col?, row?}`                                                                     | moves a tile, without `col`/`row` to the first free cell of the page                         |
-| `removeTile`   | `{id}`                                                                                       | removes a tile                                                                               |
-| `setPageTitle` | `{satellite, page, title}`                                                                   | the title of a page of a tablet, shown in its bar; empty removes it                          |
+| Command        | Message                                                                                      | Does                                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `help`         | –                                                                                            | describes the commands, kinds, sizes, icons and the grid                                                                                              |
+| `getTiles`     | `{satellite?}`                                                                               | lists the satellites and tablets, their grids, their tiles (with an `id`) and the free cells                                                          |
+| `addTile`      | `{satellite, type, state, size?, icon?, label?, unit?, state2?, state3?, page?, col?, row?}` | adds a tile, without a place in the first free cell; answers where it went (a group also takes `state4`, `title`, `label2`-`label4`, `unit2`-`unit4`) |
+| `updateTile`   | `{id, ...fields}`                                                                            | changes a tile                                                                                                                                        |
+| `moveTile`     | `{id, page, col?, row?}`                                                                     | moves a tile, without `col`/`row` to the first free cell of the page                                                                                  |
+| `removeTile`   | `{id}`                                                                                       | removes a tile                                                                                                                                        |
+| `setPageTitle` | `{satellite, page, title}`                                                                   | the title of a page of a tablet, shown in its bar; empty removes it                                                                                   |
 
 A change is saved in the settings of the instance, which then restarts and sends the tiles (a few seconds). In
 ioBroker.pi-agent the instance needs "Write allowed" in the write permissions.
@@ -246,6 +272,19 @@ Older changes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+
+- (GermanBluefox) "Pair a tablet" (tab Tablets and Device Manager): a one-time QR code that the ioBroker Visu app scans;
+  the tablet enters itself in the settings with its name and screen size and gets its link
+- (GermanBluefox) The web app of the tablets runs without a tablet entered too, so that one can pair itself
+- (GermanBluefox) The links and QR codes of the tablets name the LAN address of the host, no longer the first address of
+  its list, which was the one of Tailscale (100.x) on a host with Tailscale
+- (GermanBluefox) Four new tile types, on the satellites (firmware 2.2.0) and the tablets: group (up to four values
+  in one tile), tank (fill level, optional litres), battery (charge, bolt while charging, optional power) and status
+  (an icon that lights up while on); the tile editor draws them, the commands `addTile`/`updateTile` take them
+- (GermanBluefox) Tablet web app: the name of a value tile is no longer bold, and the toggle of a wide switch sits in
+  the middle of its line instead of half cut off at the bottom edge
 
 ### 0.4.0 (2026-11-16)
 

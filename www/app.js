@@ -327,6 +327,8 @@
     let ws = null;
 
     const SIZES = { s: [1, 1], q: [1, 2], w: [2, 1], l: [2, 2] };
+    /** The types with items (tile_item) */
+    const ITEM_TYPES = ['group', 'level', 'battery'];
     const keyOf = (page, slot) => `${page}/${slot}`;
 
     /**
@@ -390,8 +392,8 @@
     function build(tile) {
         const a = tile.args;
         const [w, h] = SIZES[a.size] || [1, 1];
-        // value, bar, chart and switch go into one line when the tile is flat (the CSS decides by its shape)
-        const rowable = ['value', 'bar', 'chart', 'switch'].includes(a.type);
+        // value, bar, chart, switch and status go into one line when the tile is flat (the CSS decides by its shape)
+        const rowable = ['value', 'bar', 'chart', 'switch', 'status'].includes(a.type);
         const e = el('div', `tile ${a.type} size-${a.size}${a.size === 'q' ? ' square' : ''}`);
         e.style.gridColumn = `${a.col + 1} / span ${w}`;
         e.style.gridRow = `${a.row + 1} / span ${h}`;
@@ -533,10 +535,100 @@
                 });
                 break;
             }
+            case 'status': {
+                // read-only: the icon lights up while on
+                b.appendChild(head);
+                tile.parts.value = b.appendChild(el('div', 'value', '–'));
+                break;
+            }
+            case 'group': {
+                // the title is the name of the tile; without one the rows take the whole tile
+                if (a.label || icon) {
+                    b.appendChild(head);
+                }
+                tile.parts.items = b.appendChild(el('div', 'items'));
+                tile.itemsDrawn = '';
+                break;
+            }
+            case 'level': {
+                b.appendChild(head);
+                const row = b.appendChild(el('div', 'gaugeRow'));
+                const tank = row.appendChild(el('div', 'tank'));
+                tile.parts.fill = tank.appendChild(el('i'));
+                // marks at a quarter, a half and three quarters, as on a tank gauge
+                for (const at of [25, 50, 75]) {
+                    tank.appendChild(el('b')).style.bottom = `${at}%`;
+                }
+                const readout = row.appendChild(el('div', 'readout'));
+                tile.parts.value = readout.appendChild(el('div', 'value', '–'));
+                tile.parts.amount = readout.appendChild(el('div', 'amount'));
+                break;
+            }
+            case 'battery': {
+                b.appendChild(head);
+                const row = b.appendChild(el('div', 'gaugeRow'));
+                const battery = row.appendChild(el('div', 'batt'));
+                const cell = battery.appendChild(el('div', 'cell'));
+                tile.parts.fill = cell.appendChild(el('i'));
+                battery.appendChild(el('b', 'cap'));
+                const bolt = iconEl('flash');
+                if (bolt) {
+                    bolt.classList.add('bolt');
+                    tile.parts.bolt = cell.appendChild(bolt);
+                }
+                const readout = row.appendChild(el('div', 'readout'));
+                tile.parts.value = readout.appendChild(el('div', 'value', '–'));
+                tile.parts.amount = readout.appendChild(el('div', 'amount'));
+                break;
+            }
             default:
                 b.appendChild(head);
         }
         return e;
+    }
+
+    /**
+     * The value of an item (a row of a group, the second amount of a level, the power of a battery) as HTML.
+     *
+     * @param {any} item - Item from tile_item
+     * @returns {string} The number with its unit, or the text, or a dash
+     */
+    function itemHtml(item) {
+        if (item.text !== undefined) {
+            return escapeHtml(item.text);
+        }
+        if (typeof item.value !== 'number') {
+            return '–';
+        }
+        const unit = item.unit ? `<span class="unit">${escapeHtml(item.unit)}</span>` : '';
+        return `${fmt(item.value, item.decimals)}${unit}`;
+    }
+
+    /**
+     * The rows of a group: built again when an item was added or renamed, else only their values are written.
+     *
+     * @param {any} tile - Group tile
+     */
+    function drawItems(tile) {
+        const items = tile.items.filter(Boolean);
+        const shape = items.map(i => `${i.index}\u0001${i.label}`).join('\u0002');
+        const box = tile.parts.items;
+        if (shape !== tile.itemsDrawn) {
+            tile.itemsDrawn = shape;
+            box.textContent = '';
+            box.style.setProperty('--n', String(Math.max(1, items.length)));
+            for (const item of items) {
+                const r = box.appendChild(el('div', 'item'));
+                r.appendChild(el('span', 'name', item.label));
+                item.el = r.appendChild(el('span', 'value'));
+            }
+        }
+        for (const item of items) {
+            if (item.el) {
+                item.el.innerHTML = itemHtml(item);
+                item.el.style.color = cssColor(item.color);
+            }
+        }
     }
 
     /**
@@ -575,7 +667,8 @@
         const a = tile.args;
         const p = tile.parts;
         const color = cssColor(tile.color);
-        e.style.setProperty('--c', color || 'var(--accent)');
+        // a battery is green unless the adapter names a colour (red below a threshold, the colour of the tile)
+        e.style.setProperty('--c', color || (a.type === 'battery' ? 'var(--ok)' : 'var(--accent)'));
         e.style.background = cssColor(tile.background);
         const unit = a.unit ? `<span class="unit">${escapeHtml(a.unit)}</span>` : '';
         const number = v => (typeof v === 'number' ? fmt(v, a.decimals) : '–');
@@ -653,6 +746,36 @@
                 p.percent.textContent = v === null ? '–' : `${v} %`;
                 break;
             }
+            case 'status':
+                e.classList.toggle('lit', !!tile.on);
+                p.value.classList.toggle('text', tile.text !== undefined);
+                if (tile.text !== undefined) {
+                    p.value.textContent = tile.text;
+                } else {
+                    p.value.innerHTML = `${number(tile.value)}${typeof tile.value === 'number' ? unit : ''}`;
+                }
+                break;
+            case 'group':
+                drawItems(tile);
+                break;
+            case 'level':
+            case 'battery': {
+                const v = tile.value;
+                const part = typeof v === 'number' ? span(a.min, a.max, v) * 100 : 0;
+                if (a.type === 'level') {
+                    p.fill.style.height = `${part}%`;
+                } else {
+                    p.fill.style.width = `${part}%`;
+                    // the bolt only after the adapter said whether it charges
+                    p.bolt?.classList.toggle('on', tile.on === true);
+                    // the value is white unless the adapter names a colour (a threshold, the colour of the tile)
+                    e.classList.toggle('colored', tile.color > 0);
+                }
+                p.value.innerHTML = `${number(v)}${typeof v === 'number' ? unit : ''}`;
+                const second = tile.items[1];
+                p.amount.innerHTML = second ? itemHtml(second) : '';
+                break;
+            }
             default:
                 break;
         }
@@ -715,6 +838,8 @@
                 color: 0,
                 background: 0,
                 points: [],
+                // rows of a group, the second amount of a level, the power of a battery (tile_item)
+                items: [],
             };
             tiles.set(keyOf(d.page, d.slot), tile);
             queueRender();
@@ -768,6 +893,38 @@
                     tile.setpoint = Number(d.value);
                 }
                 break;
+            case 'tile_item': {
+                const index = Number(d.index);
+                if (!ITEM_TYPES.includes(tile.args.type) || !Number.isInteger(index) || index < 0 || index > 3) {
+                    return;
+                }
+                tile.items[index] = {
+                    index,
+                    label: String(d.label ?? '').slice(0, 24),
+                    unit: String(d.unit ?? '').slice(0, 8),
+                    decimals: Math.max(0, Math.min(3, Number(d.decimals) || 0)),
+                    color: 0,
+                };
+                break;
+            }
+            case 'tile_item_value':
+            case 'tile_item_text':
+            case 'tile_item_color': {
+                // an item that tile_item never made is ignored, as on the satellite
+                const item = tile.items[Number(d.index)];
+                if (!item) {
+                    return;
+                }
+                if (name === 'tile_item_value') {
+                    item.value = Number(d.value);
+                    item.text = undefined;
+                } else if (name === 'tile_item_text') {
+                    item.text = String(d.value ?? '').slice(0, 32);
+                } else {
+                    item.color = Number(d.color) || 0;
+                }
+                break;
+            }
             default:
                 return;
         }

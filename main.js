@@ -12,10 +12,11 @@ const path = require('node:path');
 const utils = require('@iobroker/adapter-core');
 const { SatelliteLink, OPTIONAL_ACTIONS } = require('./lib/satellite');
 const { TabletLink } = require('./lib/tablet');
-const { TabletServer } = require('./lib/tablet-server');
+const { TabletServer, lanAddressOf } = require('./lib/tablet-server');
+const { PairingCodes, pairedRow, namesOf, PAIR_MS } = require('./lib/pairing');
 const { decideTls } = require('./lib/tls');
 const { checkTcpPort, registerTcpPort } = require('./lib/used-resources');
-const { normalizeDisplays, normalizeTiles, idOf, colorOf, pageTitlesOf } = require('./lib/layout');
+const { normalizeDisplays, normalizeTiles, idOf, colorOf, pageTitlesOf, ITEM_TYPES } = require('./lib/layout');
 const { findRenames, renameTiles, renamePageTitles } = require('./lib/renames');
 const { planRemoval } = require('./lib/cleanup');
 const { SatelliteDeviceManagement } = require('./lib/device-management');
@@ -33,6 +34,7 @@ const {
     alertColor,
     backgroundOf,
     tileArgs,
+    itemsOf,
     mediaStateOf,
     showsChange,
 } = require('./lib/values');
@@ -61,7 +63,19 @@ const DEFAULT_PWA_PORT = 8094;
  * @property {number} lastLevel - Last level above 0 of a dimmer (switched on again with it)
  * @property {number} lastColor - Colour last sent with tile_color (0 = the theme, as after tile_set)
  * @property {number} lastBackground - Background last sent with tile_background (0 = the theme)
+ * @property {import('./lib/values').TileItem[]} items - Rows of a group, the second amount of a level, the power of a
+ *   battery (tile_item)
+ * @property {Map<string, Partial<ioBroker.StateCommon>>} commons - Common part of the object of each state of an item
+ * @property {number[]} lastItemColors - Colour last sent with tile_item_color, by index
  */
+
+/**
+ * @param {Tile} tile - Tile
+ * @returns {string[]} The states the tile shows, without the one of its background
+ */
+function statesOf(tile) {
+    return [tile.state, tile.state2, tile.state3, tile.state4].filter(Boolean);
+}
 
 class SatelliteDisplay extends utils.Adapter {
     /**
@@ -77,6 +91,10 @@ class SatelliteDisplay extends utils.Adapter {
         this.links = new Map();
         /** @type {TabletServer | null} the web server of the tablets, while it runs */
         this.tabletServer = null;
+        /** the one-time codes of "Pair a tablet" (lib/pairing.js) */
+        this.pairing = new PairingCodes();
+        /** @type {Promise<unknown>} pairings one after the other: each reads the settings the one before saved */
+        this.pairingQueue = Promise.resolve();
         /** @type {Map<string, string>} access key → id of the tablet */
         this.tabletKeys = new Map();
         /** @type {Map<string, SatelliteConfig>} */
@@ -125,8 +143,17 @@ class SatelliteDisplay extends utils.Adapter {
             this.log.warn(p);
         }
         if (!displays.length) {
-            this.log.warn('No satellite configured: add one in the settings');
             await this.removeTabletObjects();
+            if (this.config.pwaEnabled !== true) {
+                this.log.warn('No satellite configured: add one in the settings');
+                return;
+            }
+            // the web server runs without a tablet too: a tablet pairs itself through it
+            this.log.warn(
+                'No satellite and no tablet configured: add one in the settings, or pair a tablet (settings, tab Tablets, "Pair a tablet")',
+            );
+            await this.startTabletServer([]);
+            await this.updateConnection();
             return;
         }
 
@@ -310,15 +337,15 @@ class SatelliteDisplay extends utils.Adapter {
     }
 
     /**
-     * Starts the web server of the tablets, when there is a tablet and the certificate (with HTTPS) is there.
-     * Port and address go to the used resources registry of js-controller 8 (doc/used-resources.md).
+     * Starts the web server of the tablets, when the certificate (with HTTPS) is there. It runs without a tablet too,
+     * so that one can pair itself (lib/pairing.js). Port and address go to the used resources registry of
+     * js-controller 8 (doc/used-resources.md).
      *
      * @param {SatelliteConfig[]} tablets - Enabled tablets
      */
     async startTabletServer(tablets) {
         if (!tablets.length) {
-            this.log.warn('Tablets with the web app are on, but no tablet is entered: the web server stays off');
-            return;
+            this.log.info('Tablets with the web app are on, but no tablet is entered yet: pair one in the settings');
         }
         const decision = await decideTls(this.config, (pub, priv, chained) =>
             this.getCertificatesAsync(pub, priv, chained),
@@ -341,6 +368,7 @@ class SatelliteDisplay extends utils.Adapter {
                 clearInterval: handle => this.clearInterval(/** @type {ioBroker.Interval} */ (handle)),
             },
             log: this.log,
+            onPair: (request, from) => this.onPair(request, from),
         });
         try {
             const address = await server.start({
@@ -391,22 +419,111 @@ class SatelliteDisplay extends utils.Adapter {
      * @returns {Promise<{name: string, url: string}[]>} One link a tablet
      */
     async tabletLinks() {
+        const base = await this.webAppAddress();
+        const links = [];
+        for (const [key, id] of this.tabletKeys) {
+            const sat = this.satellites.get(id);
+            if (sat) {
+                links.push({ name: sat.name, url: `${base}/t/${encodeURIComponent(key)}/` });
+            }
+        }
+        return links;
+    }
+
+    /** @returns {Promise<string>} Scheme, host and port of the web app as a tablet in the LAN reaches it */
+    async webAppAddress() {
         const scheme = this.config.secure === true ? 'https' : 'http';
         const bind = String(this.config.pwaBind || '').trim();
         const host = bind && bind !== '0.0.0.0' && bind !== '::' ? bind : await this.lanAddress();
         const n = Number(this.config.pwaPort);
         const port = Number.isInteger(n) && n > 0 && n < 65536 ? n : DEFAULT_PWA_PORT;
-        const links = [];
-        for (const [key, id] of this.tabletKeys) {
-            const sat = this.satellites.get(id);
-            if (sat) {
-                links.push({
-                    name: sat.name,
-                    url: `${scheme}://${host.includes(':') ? `[${host}]` : host}:${port}/t/${encodeURIComponent(key)}/`,
-                });
-            }
+        return `${scheme}://${host.includes(':') ? `[${host}]` : host}:${port}`;
+    }
+
+    /**
+     * "Pair a tablet": a one-time link for the QR code of the settings, valid for {@link PAIR_MS}.
+     *
+     * @returns {Promise<{url: string, expires: number, minutes: number} | null>} The link, null while the web app does
+     *   not run
+     */
+    async openPairing() {
+        if (!this.tabletServer) {
+            return null;
         }
-        return links;
+        const { code, expires } = this.pairing.open();
+        return { url: `${await this.webAppAddress()}/pair/${code}`, expires, minutes: Math.round(PAIR_MS / 60_000) };
+    }
+
+    /**
+     * A tablet scanned the QR code of "Pair a tablet" (POST /pair): with a valid code it is entered in the settings
+     * with its name and screen size, and gets the access key of its link. The settings are saved after the answer,
+     * which restarts the instance; the tablet connects again by itself.
+     *
+     * @param {Record<string, unknown>} request - code, name, width and height (CSS pixels) of the tablet
+     * @param {string} from - Its address, for the log
+     * @returns {Promise<{status: number, body: Record<string, unknown>}>} The answer to the tablet
+     */
+    async onPair(request, from) {
+        if (!this.pairing.take(request.code)) {
+            this.log.warn(
+                `A tablet (${from}) tried to pair with an unknown, used or expired code: show a new one in the settings`,
+            );
+            return { status: 403, body: { error: 'code' } };
+        }
+        /** @type {Promise<{answer: {status: number, body: Record<string, unknown>}, save: () => Promise<void>}>} */
+        const entered = this.pairingQueue.then(() => this.enterPairedTablet(request, from));
+        // the next pairing waits for this one to be saved; the answer does not
+        this.pairingQueue = entered
+            .then(
+                e =>
+                    new Promise(resolve => {
+                        const timer = this.setTimeout(() => {
+                            this.timers.delete(timer);
+                            resolve(e.save());
+                        }, 500);
+                        this.timers.add(timer);
+                    }),
+            )
+            .catch(e => this.log.error(`A tablet could not be paired: ${e.message}`));
+        return (await entered).answer;
+    }
+
+    /**
+     * The row and the access key of a paired tablet.
+     *
+     * @param {Record<string, unknown>} request - What the tablet sent
+     * @param {string} from - Its address, for the log
+     * @returns {Promise<{answer: {status: number, body: Record<string, unknown>}, save: () => Promise<void>}>} The
+     *   answer, and the save of the settings that comes after it
+     */
+    async enterPairedTablet(request, from) {
+        const id = `system.adapter.${this.namespace}`;
+        const obj = await this.getForeignObjectAsync(id);
+        if (!obj) {
+            throw new Error('the instance has no object');
+        }
+        const native = /** @type {Record<string, unknown>} */ (obj.native || {});
+        const row = pairedRow(request, namesOf(native));
+        const name = String(row.name);
+        const key = crypto.randomBytes(24).toString('base64url');
+        // the key waits in the object of the tablet, where createObjects finds it after the restart
+        await this.extendObject(`tablets.${idOf(name)}`, { type: 'device', common: { name }, native: { key } });
+        const rows = Array.isArray(native.tablets)
+            ? native.tablets
+            : native.tablets && typeof native.tablets === 'object'
+              ? Object.values(native.tablets)
+              : [];
+        obj.native = { ...native, tablets: [...rows, row] };
+        this.log.info(
+            `Tablet "${name}" (${from}) paired itself${row.width ? `, screen ${row.width} x ${row.height}` : ''}: it is in the settings now and the instance starts again; give it tiles in the tile editor`,
+        );
+        return {
+            answer: { status: 200, body: { name, path: `/t/${encodeURIComponent(key)}/` } },
+            // the whole object, as saveTiles: the instance restarts with the tablet
+            save: async () => {
+                await this.setForeignObjectAsync(id, obj);
+            },
+        };
     }
 
     /**
@@ -433,21 +550,14 @@ class SatelliteDisplay extends utils.Adapter {
         return (await this.tabletLinks()).find(l => l.name === sat.name);
     }
 
-    /** @returns {Promise<string>} The first IPv4 address of this host in the LAN, else its name */
+    /** @returns {Promise<string>} The IPv4 address a tablet in the LAN reaches this host under (lanAddressOf), else its name */
     async lanAddress() {
         const obj = await this.getForeignObjectAsync(`system.host.${this.host}`).catch(() => null);
         const native =
             /** @type {{hardware?: {networkInterfaces?: Record<string, {family?: string | number, internal?: boolean, address?: string}[]>}}} */ (
                 obj?.native ?? {}
             );
-        for (const list of Object.values(native.hardware?.networkInterfaces ?? {})) {
-            for (const a of Array.isArray(list) ? list : []) {
-                if ((a.family === 'IPv4' || a.family === 4) && !a.internal && a.address) {
-                    return a.address;
-                }
-            }
-        }
-        return String(this.host || 'localhost');
+        return lanAddressOf(native.hardware?.networkInterfaces) ?? String(this.host || 'localhost');
     }
 
     /**
@@ -543,9 +653,7 @@ class SatelliteDisplay extends utils.Adapter {
     async bindTiles(tiles) {
         this.bound = await this.boundOf(tiles, true);
         for (const b of this.bound) {
-            for (const id of [...new Set([b.tile.state, b.tile.state2, b.tile.state3, b.tile.bgState])].filter(
-                Boolean,
-            )) {
+            for (const id of [...new Set([...statesOf(b.tile), b.tile.bgState])].filter(Boolean)) {
                 const list = this.byState.get(id) || [];
                 list.push(b);
                 this.byState.set(id, list);
@@ -584,11 +692,12 @@ class SatelliteDisplay extends utils.Adapter {
             return objects.get(id) ?? null;
         };
         for (const tile of tiles) {
-            const obj = await objectOf(tile.state);
-            const obj2 = tile.state2 ? await objectOf(tile.state2) : null;
-            if (tile.state3) {
-                await objectOf(tile.state3);
+            for (const id of statesOf(tile)) {
+                await objectOf(id);
             }
+            const obj = objects.get(tile.state) ?? null;
+            const obj2 = tile.state2 ? (objects.get(tile.state2) ?? null) : null;
+            const items = itemsOf(tile, id => objects.get(id), this.lang);
             /** @type {Bound} */
             const b = {
                 tile,
@@ -598,6 +707,14 @@ class SatelliteDisplay extends utils.Adapter {
                 lastLevel: 100,
                 lastColor: 0,
                 lastBackground: 0,
+                items,
+                commons: new Map(
+                    items.map(item => [
+                        item.state,
+                        /** @type {Partial<ioBroker.StateCommon>} */ (objects.get(item.state)?.common || {}),
+                    ]),
+                ),
+                lastItemColors: [],
             };
             result.push(b);
         }
@@ -636,13 +753,22 @@ class SatelliteDisplay extends utils.Adapter {
         if (obj.command === 'tabletLinks') {
             if (!this.tabletServer) {
                 reply({
-                    error: 'The web app of the tablets does not run: switch it on, enter a tablet and save (or see the log)',
+                    error: 'The web app of the tablets does not run: switch it on and save (or see the log)',
                 });
                 return;
             }
             const links = await this.tabletLinks();
             // links for the QR codes of the settings, result as text for a plain sendTo
             reply({ links, result: links.map(l => `${l.name}: ${l.url}`).join('\n') });
+            return;
+        }
+        if (obj.command === 'tabletPairCode') {
+            const pairing = await this.openPairing();
+            reply(
+                pairing ?? {
+                    error: 'The web app of the tablets does not run: switch it on and save (or see the log)',
+                },
+            );
             return;
         }
         if (obj.command === 'tabletNewKey') {
@@ -1045,6 +1171,20 @@ class SatelliteDisplay extends utils.Adapter {
             if (b.tile.type === 'switch' && link.has('tile_toggle')) {
                 link.call('tile_toggle', { page: b.tile.page, slot: b.tile.slot, show: b.tile.showToggle });
             }
+            // the rows of a group, the second amount of a level, the power of a battery: after tile_set, which
+            // deletes them, and before the values
+            b.lastItemColors = [];
+            for (const item of b.items) {
+                link.call('tile_item', {
+                    page: b.tile.page,
+                    slot: b.tile.slot,
+                    index: item.index,
+                    label: item.label,
+                    unit: item.unit,
+                    decimals: item.decimals,
+                });
+                this.sendItemColor(link, b, item.index, null);
+            }
         }
         for (const b of mine) {
             await this.pushAll(b);
@@ -1055,7 +1195,8 @@ class SatelliteDisplay extends utils.Adapter {
     }
 
     /**
-     * A thermostat needs the action tile_setpoint of a newer firmware; without it the tile is left out.
+     * A thermostat needs the action tile_setpoint of a newer firmware, a group, level, battery or status tile the
+     * action tile_item; without it the tile is left out (one warning per display and action).
      *
      * @param {SatelliteConfig} sat - Satellite
      * @param {SatelliteLink | TabletLink} link - Its connection
@@ -1063,14 +1204,18 @@ class SatelliteDisplay extends utils.Adapter {
      * @returns {boolean} True when the firmware can show the tile
      */
     supported(sat, link, b) {
-        if (b.tile.type !== 'thermostat' || link.has('tile_setpoint')) {
+        /** @type {'tile_setpoint' | 'tile_item' | null} */
+        const needed =
+            b.tile.type === 'thermostat' ? 'tile_setpoint' : ITEM_TYPES.includes(b.tile.type) ? 'tile_item' : null;
+        if (!needed || link.has(needed)) {
             return true;
         }
-        const key = `${sat.id}/tile_setpoint`;
+        const key = `${sat.id}/${needed}`;
         if (!this.oldFirmwareWarned.has(key)) {
             this.oldFirmwareWarned.add(key);
+            const kind = needed === 'tile_setpoint' ? 'a thermostat tile' : `a ${b.tile.type} tile`;
             this.log.warn(
-                `${sat.name}: a thermostat tile needs the satellite firmware ${OPTIONAL_ACTIONS.tile_setpoint} or newer, it is left out`,
+                `${sat.name}: ${kind} needs the satellite firmware ${OPTIONAL_ACTIONS[needed]} or newer, it is left out`,
             );
         }
         return false;
@@ -1088,7 +1233,7 @@ class SatelliteDisplay extends utils.Adapter {
         try {
             const state = await this.getForeignStateAsync(b.tile.state);
             this.push(b, b.tile.state, state?.val);
-            for (const id of [b.tile.state2, b.tile.state3, b.tile.bgState].filter(Boolean)) {
+            for (const id of new Set([...statesOf(b.tile), b.tile.bgState].filter(Boolean))) {
                 if (id === b.tile.state) {
                     continue;
                 }
@@ -1115,7 +1260,7 @@ class SatelliteDisplay extends utils.Adapter {
         const { page, slot } = b.tile;
         if (id === b.tile.bgState) {
             this.sendBackground(link, b, val);
-            if (id !== b.tile.state && id !== b.tile.state2 && id !== b.tile.state3) {
+            if (!statesOf(b.tile).includes(id)) {
                 return;
             }
         }
@@ -1181,8 +1326,97 @@ class SatelliteDisplay extends utils.Adapter {
                     link.call('tile_state', { page, slot, on: isOn(val) });
                 }
                 break;
+            case 'status': {
+                // lit while on; the text of the object, an/aus, or the number with its unit
+                link.call('tile_state', { page, slot, on: isOn(val) });
+                const mapped = stateText(val, b.common, this.lang);
+                const n = typeof val === 'boolean' || mapped !== null ? null : toNumber(val);
+                if (mapped !== null) {
+                    link.call('tile_text', { page, slot, value: mapped });
+                } else if (n !== null) {
+                    link.call('tile_value', { page, slot, value: n });
+                } else if (val !== null && val !== undefined) {
+                    link.call('tile_text', { page, slot, value: textOf(val, this.lang) });
+                }
+                break;
+            }
+            case 'level':
+            case 'battery':
+                if (id === b.tile.state) {
+                    const n = toNumber(val);
+                    if (n !== null) {
+                        link.call('tile_value', { page, slot, value: n });
+                        this.sendColor(link, b, n);
+                    }
+                }
+                if (b.tile.type === 'battery') {
+                    // charging: its own state, else a positive power
+                    if (id === b.tile.state3) {
+                        link.call('tile_state', { page, slot, on: isOn(val) });
+                    } else if (id === b.tile.state2 && !b.tile.state3) {
+                        const n = toNumber(val);
+                        if (n !== null) {
+                            link.call('tile_state', { page, slot, on: n > 0 });
+                        }
+                    }
+                }
+                this.pushItems(link, b, id, val);
+                break;
+            case 'group':
+                this.pushItems(link, b, id, val);
+                break;
             default:
                 break;
+        }
+    }
+
+    /**
+     * Sends the value of the items bound to a state (one state may be the row of a group twice).
+     *
+     * @param {SatelliteLink | TabletLink} link - Connection of the display
+     * @param {Bound} b - Tile
+     * @param {string} id - The state that changed
+     * @param {unknown} val - Its value
+     */
+    pushItems(link, b, id, val) {
+        const { page, slot } = b.tile;
+        for (const item of b.items) {
+            if (item.state !== id) {
+                continue;
+            }
+            const common = b.commons.get(id) || {};
+            const mapped = stateText(val, common, this.lang);
+            const n = typeof val === 'boolean' || mapped !== null ? null : toNumber(val);
+            if (mapped !== null) {
+                link.call('tile_item_text', { page, slot, index: item.index, value: mapped });
+            } else if (n !== null) {
+                link.call('tile_item_value', { page, slot, index: item.index, value: n });
+                // the thresholds of the tile: on each row of a group, not on a second amount
+                this.sendItemColor(link, b, item.index, n);
+            } else if (val !== null && val !== undefined) {
+                link.call('tile_item_text', { page, slot, index: item.index, value: textOf(val, this.lang) });
+            }
+        }
+    }
+
+    /**
+     * The colour of a row of a group: red beyond a threshold of the tile, else the colour of the tile, else the
+     * theme; sent only when it changes. Only a group colours its rows.
+     *
+     * @param {SatelliteLink | TabletLink} link - Connection of the display
+     * @param {Bound} b - Tile
+     * @param {number} index - Index of the item
+     * @param {number | null} value - Its value, null = no value yet
+     */
+    sendItemColor(link, b, index, value) {
+        if (b.tile.type !== 'group' || !link.has('tile_item_color')) {
+            return;
+        }
+        const alert = value === null ? 0 : alertColor(value, b.tile);
+        const color = alert || (b.tile.color ?? 0);
+        if (color !== (b.lastItemColors[index] ?? 0)) {
+            b.lastItemColors[index] = color;
+            link.call('tile_item_color', { page: b.tile.page, slot: b.tile.slot, index, color });
         }
     }
 
