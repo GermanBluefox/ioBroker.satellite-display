@@ -158,15 +158,45 @@ describe('device manager', () => {
         assert.equal(forms[1].items._qr.data, 'https://10.0.0.2:8094/t/NEW/');
     });
 
-    it('the instance action lists every tablet only when there is one', async () => {
+    it('the instance actions: pairing while the web app runs, the links only when there is a tablet', async () => {
         const dm = new SatelliteDeviceManagement(fakeAdapter());
         const info = /** @type {any} */ (dm).getInstanceInfo();
         assert.equal(info.apiVersion, 'v3');
         assert.deepEqual(
             info.actions.map((/** @type {any} */ a) => a.id),
-            ['tabletLinks'],
+            ['pairTablet', 'tabletLinks'],
         );
-        const none = new SatelliteDeviceManagement(fakeAdapter({ satellites: new Map([['kitchen', kitchen]]) }));
+        const noTablet = new SatelliteDeviceManagement(fakeAdapter({ satellites: new Map([['kitchen', kitchen]]) }));
+        assert.deepEqual(
+            /** @type {any} */ (noTablet).getInstanceInfo().actions.map((/** @type {any} */ a) => a.id),
+            ['pairTablet'],
+        );
+        const none = new SatelliteDeviceManagement(
+            fakeAdapter({ satellites: new Map([['kitchen', kitchen]]), tabletServer: null }),
+        );
         assert.equal(/** @type {any} */ (none).getInstanceInfo().actions, undefined);
+    });
+
+    it('"Pair a tablet" shows the one-time link as a QR code, with its minutes in the hint', async () => {
+        const dm = new SatelliteDeviceManagement(
+            fakeAdapter({ openPairing: async () => ({ url: 'http://10.0.0.2:8094/pair/CODE', minutes: 10 }) }),
+        );
+        /** @type {any[]} */
+        const forms = [];
+        const result = await /** @type {any} */ (dm).showPairing({
+            showForm: async (/** @type {any} */ schema, /** @type {any} */ options) => forms.push({ schema, options }),
+        });
+        assert.deepEqual(result, { refresh: true });
+        const items = forms[0].schema.items;
+        assert.equal(items._qr.data, 'http://10.0.0.2:8094/pair/CODE');
+        assert.match(items._hint.text.de, /10 Minuten/);
+        assert.doesNotMatch(items._hint.text.en, /%s/);
+        assert.equal(forms[0].options.title.en, 'Pair a tablet');
+
+        /** @type {any[]} */
+        const messages = [];
+        const off = new SatelliteDeviceManagement(fakeAdapter({ openPairing: async () => null }));
+        await /** @type {any} */ (off).showPairing({ showMessage: async (/** @type {any} */ m) => messages.push(m) });
+        assert.match(messages[0].en, /does not run/);
     });
 });

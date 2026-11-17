@@ -122,6 +122,45 @@ describe('layout', () => {
         assert.match(problems[7], /no state chosen/);
     });
 
+    it('keeps the states, names and units a group, a level and a battery take, and drops the others', () => {
+        const problems = [];
+        const sats = normalizeSatellites(SATS, problems);
+        const full = {
+            state2: 'a.0.b',
+            state3: 'a.0.c',
+            state4: 'a.0.d',
+            title: ' Temperaturen ',
+            label2: 'Innen',
+            unit4: '°C',
+        };
+        const [group, level, battery, status] = normalizeTiles(
+            [
+                row({ type: 'group', ...full }),
+                row({ col: 1, type: 'level', ...full }),
+                row({ row: 2, type: 'battery', ...full }),
+                row({ row: 2, col: 1, size: 's', type: 'status', ...full }),
+            ],
+            sats,
+            problems,
+        );
+        assert.deepEqual(problems, []);
+        assert.deepEqual(
+            [group.state2, group.state3, group.state4, group.title, group.label2, group.unit4],
+            ['a.0.b', 'a.0.c', 'a.0.d', 'Temperaturen', 'Innen', '°C'],
+        );
+        assert.deepEqual([level.state2, level.state3, level.state4, level.title], ['a.0.b', '', '', '']);
+        assert.deepEqual([battery.state2, battery.state3, battery.state4], ['a.0.b', 'a.0.c', '']);
+        assert.deepEqual([status.state2, status.state3, status.state4], ['', '', '']);
+    });
+
+    it('gives the new types the sizes of the firmware 2.3.0', () => {
+        const problems = [];
+        const sats = normalizeSatellites(SATS, problems);
+        normalizeTiles([row({ type: 'level', size: 's' }), row({ col: 1, type: 'status', size: 'l' })], sats, problems);
+        assert.match(problems[0], /a level tile comes in the sizes q, l/);
+        assert.match(problems[1], /a status tile comes in the sizes s, q, w/);
+    });
+
     it('needs the target temperature for a thermostat, keeps its relay and step', () => {
         const problems = [];
         const sats = normalizeSatellites(SATS, problems);
@@ -296,6 +335,13 @@ describe('layout', () => {
         }
         for (const [size, [c, r]] of Object.entries(SIZES)) {
             assert.ok(block('SIZES').includes(`${size}: [${c}, ${r}]`), size);
+        }
+        const { ITEM_TYPES, EXTRA_STATES, ALERT_TYPES } = require('../../lib/layout');
+        const quoted = list => list.map(k => `'${k}'`).join(', ');
+        assert.ok(block('FIRMWARE_230_KINDS').includes(`[${quoted(ITEM_TYPES)}]`), 'FIRMWARE_230_KINDS');
+        assert.ok(block('ALERT_KINDS').includes(`[${quoted(ALERT_TYPES)}]`), 'ALERT_KINDS');
+        for (const [key, kinds] of Object.entries(EXTRA_STATES)) {
+            assert.ok(block('EXTRA_STATES').includes(`${key}: [${quoted(kinds)}]`), key);
         }
     });
 });

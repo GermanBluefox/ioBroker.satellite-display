@@ -2,7 +2,7 @@
  * from this cache when the adapter cannot be reached, so the page still opens and shows "Connecting…". */
 'use strict';
 
-const CACHE = 'satellite-display-v2';
+const CACHE = 'satellite-display-v3';
 const SHELL = [
     './',
     'index.html',
@@ -34,7 +34,13 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
-    if (event.request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.endsWith('/ws')) {
+    // the socket, and the pictures of the cameras: a stream has no end, and a picture is never the same twice
+    if (
+        event.request.method !== 'GET' ||
+        url.origin !== self.location.origin ||
+        url.pathname.endsWith('/ws') ||
+        /\/cam\/\d+\/\d+\/?$/.test(url.pathname)
+    ) {
         return;
     }
     event.respondWith(

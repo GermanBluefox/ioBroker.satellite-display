@@ -35,6 +35,10 @@ import { ConfigGeneric, type ConfigGenericProps, type ConfigGenericState } from 
 
 import {
     ALERT_KINDS,
+    EXTRA_STATES,
+    FIRMWARE_230_KINDS,
+    TABLET_KINDS,
+    TITLE_KINDS,
     ICONS,
     KINDS,
     SATELLITE_GRID,
@@ -59,6 +63,7 @@ import {
     type TileRow,
 } from './layout';
 import { TileIcon } from './icons';
+import { mdiCctv, mdiHomeLightningBolt, mdiSolarPower, mdiTransmissionTower } from '@mdi/js';
 
 /** The line of a chart in the preview without a history */
 const SAMPLE_LINE = [0, 0.6, 0.4, 0.7, 0.3, 0.5, 0.2, 0.45, 0.35];
@@ -124,10 +129,76 @@ const KIND_KEYS: Record<Kind, string> = {
     dimmer: 'sd_kind_dimmer',
     button: 'sd_kind_button',
     thermostat: 'sd_kind_thermostat',
+    group: 'sd_kind_group',
+    level: 'sd_kind_level',
+    battery: 'sd_kind_battery',
+    status: 'sd_kind_status',
+    map: 'sd_kind_map',
+    flow: 'sd_kind_flow',
+    trend: 'sd_kind_trend',
+    camera: 'sd_kind_camera',
 };
-const SIZE_LABELS: Record<Size, string> = { s: '1 × 1', q: '1 × 2', w: '2 × 1', l: '2 × 2' };
+const SIZE_LABELS: Record<Size, string> = { s: '1 × 1', q: '1 × 2', w: '2 × 1', l: '2 × 2', x: '3 × 2', f: '4 × 3' };
 
-type StateAttr = 'state' | 'state2' | 'state3' | 'bgState';
+type StateAttr = 'state' | 'state2' | 'state3' | 'state4' | 'state5' | 'bgState';
+
+/** The parts of a flow (www/app.js FLOW_COLORS): state, the field of its name, the i18n key, colour, icon */
+const FLOW_PARTS: [StateAttr, 'label' | 'label2' | 'label3' | 'label4' | '', string, string, string][] = [
+    ['state', 'label', 'sd_flow_solar', '#f59e0b', mdiSolarPower],
+    ['state2', 'label2', 'sd_flow_battery', '#22c55e', ''],
+    ['state3', 'label3', 'sd_flow_grid', '#3b82f6', mdiTransmissionTower],
+    ['state4', 'label4', 'sd_flow_use', '#a855f7', mdiHomeLightningBolt],
+    ['state5', '', 'sd_flow_soc', '#22c55e', ''],
+];
+
+/** The names a flow gives its parts when the settings give none (www/app.js TEXTS) */
+const FLOW_NAMES: Record<string, string> = {
+    sd_flow_solar: 'sd_flow_solar_name',
+    sd_flow_battery: 'sd_flow_battery_name',
+    sd_flow_grid: 'sd_flow_grid_name',
+    sd_flow_use: 'sd_flow_use_name',
+};
+
+/** Colours of the series of a trend (www/app.js SERIES_COLORS) */
+const SERIES_COLORS = ['#3b82f6', '#f59e0b', '#22c55e', '#a855f7'];
+
+/** On and off in the language of the admin (lib/values.js ON_OFF) */
+const ON_OFF: Record<string, [string, string]> = {
+    en: ['on', 'off'],
+    de: ['an', 'aus'],
+    ru: ['вкл', 'выкл'],
+    pt: ['lig.', 'desl.'],
+    nl: ['aan', 'uit'],
+    fr: ['marche', 'arrêt'],
+    it: ['acceso', 'spento'],
+    es: ['enc.', 'apag.'],
+    pl: ['wł.', 'wył.'],
+    uk: ['увімк', 'вимк'],
+    'zh-cn': ['开', '关'],
+};
+
+/** True when a value counts as on (lib/values.js isOn) */
+function isOnValue(val: unknown): boolean {
+    if (typeof val === 'boolean') {
+        return val;
+    }
+    if (typeof val === 'number') {
+        return val !== 0;
+    }
+    if (typeof val === 'string') {
+        return ['1', 'true', 'on', 'an', 'ein', 'yes', 'open', 'opened'].includes(val.trim().toLowerCase());
+    }
+    return false;
+}
+
+/** One item of a group, level or battery tile (lib/values.js TileItem) */
+interface Item {
+    index: number;
+    state: string;
+    label: string;
+    unit: string;
+    decimals: number;
+}
 
 /** Units shown with one decimal when the tile names no decimals (lib/values.js ONE_DECIMAL) */
 const ONE_DECIMAL = ['°C', '°F', '°', 'K', 'kW', 'kWh', 'MWh', 'V', 'A', 'm/s', 'km/h', 'mm', 'l', 'm³', 'bar', 'pH'];
@@ -155,6 +226,8 @@ const COLOR = {
     heatOn: '#4CAF50',
     heatOff: '#4B5563',
     alert: '#EF4444',
+    /** The fill of a battery (firmware 2.3.0) */
+    battery: '#22C55E',
 };
 
 interface TileEditorState extends ConfigGenericState {
@@ -532,7 +605,14 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
         const socket = this.props.oContext.socket;
         const ids = new Set<string>();
         for (const t of this.pageTiles()) {
-            for (const id of [t.tile.state, t.tile.state2, t.tile.state3, t.tile.bgState || '']) {
+            for (const id of [
+                t.tile.state,
+                t.tile.state2,
+                t.tile.state3,
+                t.tile.state4,
+                t.tile.state5 || '',
+                t.tile.bgState || '',
+            ]) {
                 if (id && !(id in this.state.values)) {
                     ids.add(id);
                 }
@@ -671,7 +751,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
         const hints: string[] = [];
         const common = (id: string): Partial<ioBroker.StateCommon> | null | undefined =>
             id ? this.state.commons[id] : undefined;
-        for (const id of [t.state, t.state2, t.state3]) {
+        for (const id of [t.state, t.state2, t.state3, t.state4, t.state5]) {
             if (id && common(id) === null) {
                 hints.push('sd_hint_missing');
                 break;
@@ -691,7 +771,9 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
             t.type === 'bar' ||
             t.type === 'chart' ||
             t.type === 'dimmer' ||
-            t.type === 'thermostat';
+            t.type === 'thermostat' ||
+            t.type === 'level' ||
+            t.type === 'battery';
         const type = common(t.state)?.type;
         if (numeric && type && type !== 'number' && type !== 'mixed') {
             hints.push('sd_hint_not_number');
@@ -915,8 +997,10 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
             size,
             col,
             row,
-            state2: type === 'dimmer' || type === 'thermostat' ? t.state2 : '',
-            state3: type === 'thermostat' ? t.state3 || '' : '',
+            state2: EXTRA_STATES.state2.includes(type) ? t.state2 : '',
+            state3: EXTRA_STATES.state3.includes(type) ? t.state3 || '' : '',
+            state4: EXTRA_STATES.state4.includes(type) ? t.state4 || '' : '',
+            state5: EXTRA_STATES.state5.includes(type) ? t.state5 || '' : '',
         });
     }
 
@@ -953,7 +1037,104 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
 
     /** True when the firmware shows the icon of this tile in front of (or instead of) the name */
     showsIcon(t: TileRow): boolean {
+        // a status draws its icon itself, a group has none, a battery only in its large size
+        if (t.type === 'group' || t.type === 'status' || (t.type === 'battery' && t.size !== 'l')) {
+            return false;
+        }
         return !!t.icon && t.type !== 'button' && t.size !== 'q';
+    }
+
+    /** The rows of a group, the amount of a level, the power of a battery, as the adapter sends them (itemsOf) */
+    itemsOf(t: TileRow): Item[] {
+        const own = t.decimals === '' || t.decimals === null || t.decimals === undefined ? null : Number(t.decimals);
+        const item = (index: number, state: string, label = '', unit = '', named = false): Item => {
+            const shownUnit = (unit || this.state.units[state] || '').slice(0, 8);
+            const name = label || (named ? this.state.names[state] || state.split('.').pop() || '' : '');
+            return {
+                index,
+                state,
+                label: name.slice(0, 24),
+                unit: shownUnit,
+                // the decimals of the tile are those of its values; a second amount follows its own unit
+                decimals:
+                    t.type === 'group' && own !== null
+                        ? Math.max(0, Math.min(3, own))
+                        : ONE_DECIMAL.includes(shownUnit)
+                          ? 1
+                          : 0,
+            };
+        };
+        if (t.type === 'group') {
+            const rows: [string | undefined, string | undefined, string | undefined][] = [
+                [t.state, t.label, t.unit],
+                [t.state2, t.label2, t.unit2],
+                [t.state3, t.label3, t.unit3],
+                [t.state4, t.label4, t.unit4],
+            ];
+            return rows
+                .filter(([state]) => !!state)
+                .map(([state, label, unit], index) => item(index, state || '', label, unit, true));
+        }
+        if ((t.type === 'level' || t.type === 'battery') && t.state2) {
+            return [item(1, t.state2, t.label2, t.unit2)];
+        }
+        return [];
+    }
+
+    /**
+     * A value as the display shows it: the text of the object, on/off, or the number with its unit (the adapter,
+     * main.js pushItems).
+     */
+    valueText(state: string, unit: string, decimals: number): { text: string; num: number; unit: string } {
+        const value = this.state.values[state];
+        const mapped = stateTextOf(value, this.state.commons[state]);
+        if (mapped !== null) {
+            return { text: mapped, num: Number.NaN, unit: '' };
+        }
+        if (typeof value === 'boolean') {
+            const words = ON_OFF[I18n.getLanguage()] || ON_OFF.en;
+            return { text: value ? words[0] : words[1], num: Number.NaN, unit: '' };
+        }
+        const n =
+            typeof value === 'number'
+                ? value
+                : typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))
+                  ? Number(value)
+                  : Number.NaN;
+        if (Number.isFinite(n)) {
+            return {
+                text: n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }),
+                num: n,
+                unit,
+            };
+        }
+        return {
+            text: value === undefined || value === null ? '–' : String(value).slice(0, 32),
+            num: Number.NaN,
+            unit: '',
+        };
+    }
+
+    /** Charging, as the adapter decides it: its own state, else a positive power */
+    charging(t: TileRow): boolean | null {
+        if (t.state3) {
+            const v = this.state.values[t.state3];
+            return v === undefined || v === null ? null : isOnValue(v);
+        }
+        if (t.state2) {
+            const v = Number(this.state.values[t.state2]);
+            return Number.isFinite(v) ? v > 0 : null;
+        }
+        return null;
+    }
+
+    /** The decimals of the value of a tile: its own, else by its unit (lib/values.js decimalsFor) */
+    decimalsOf(t: TileRow, unit: string): number {
+        return t.decimals === '' || t.decimals === null || t.decimals === undefined
+            ? ONE_DECIMAL.includes(unit)
+                ? 1
+                : 0
+            : Math.max(0, Math.min(3, Number(t.decimals)));
     }
 
     /** A switch without its toggle: the whole tile switches and lights up */
@@ -1386,6 +1567,318 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                         <span style={{ fontSize: px(11) }}>{name}</span>
                     </div>
                 );
+            case 'group': {
+                const items = this.itemsOf(t);
+                const flatGroup = !big;
+                const rows = items.map(item => {
+                    const v = this.valueText(item.state, item.unit, item.decimals);
+                    return {
+                        ...item,
+                        text: `${v.text}${v.unit ? ` ${v.unit}` : ''}`,
+                        color: alerted(t, v.num) ? COLOR.alert : cssColor(t.color) || '#fff',
+                    };
+                });
+                const small: React.CSSProperties = {
+                    color: COLOR.label,
+                    fontSize: px(10),
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    minWidth: 0,
+                };
+                if (!rows.length) {
+                    return <div style={small}>{I18n.t('sd_no_state')}</div>;
+                }
+                return flatGroup ? (
+                    <div style={{ display: 'flex', height: '100%', gap: px(6) }}>
+                        {rows.map(r => (
+                            <div
+                                key={r.index}
+                                style={{
+                                    flex: '1 1 0',
+                                    minWidth: 0,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'space-between',
+                                }}
+                            >
+                                <span style={small}>{r.label}</span>
+                                <span
+                                    style={{
+                                        fontSize: t.size === 'w' ? px(14) : px(12),
+                                        color: r.color,
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    {r.text}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {t.title ? (
+                            <div style={{ ...small, color: cssColor(t.color) || COLOR.label }}>{t.title}</div>
+                        ) : null}
+                        <div
+                            style={{
+                                flex: 1,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-evenly',
+                            }}
+                        >
+                            {rows.map(r => (
+                                <div
+                                    key={r.index}
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'baseline',
+                                        gap: px(4),
+                                    }}
+                                >
+                                    <span style={small}>{r.label}</span>
+                                    <span style={{ fontSize: px(12), color: r.color, whiteSpace: 'nowrap' }}>
+                                        {r.text}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
+            case 'level': {
+                const amount = this.itemsOf(t)[0];
+                const second = amount ? this.valueText(amount.state, amount.unit, amount.decimals) : null;
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {label}
+                        <div
+                            style={{
+                                flex: 1,
+                                minHeight: 0,
+                                display: 'flex',
+                                gap: px(12),
+                                marginTop: px(3),
+                                paddingBottom: px(3),
+                            }}
+                        >
+                            <div
+                                style={{
+                                    position: 'relative',
+                                    width: t.size === 'l' ? px(34) : px(26),
+                                    flex: 'none',
+                                    background: COLOR.track,
+                                    borderRadius: px(4),
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        height: `${frac * 100}%`,
+                                        background: accent,
+                                    }}
+                                />
+                                {[25, 50, 75].map(at => (
+                                    <div
+                                        key={at}
+                                        style={{
+                                            position: 'absolute',
+                                            left: 0,
+                                            bottom: `${at}%`,
+                                            width: px(6),
+                                            height: px(2),
+                                            background: COLOR.label,
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                                <div style={{ fontSize: t.size === 'l' ? px(26) : px(16), color: valueColor }}>
+                                    {shown}
+                                </div>
+                                {second ? (
+                                    <div style={{ fontSize: px(12), color: COLOR.label, whiteSpace: 'nowrap' }}>
+                                        {`${second.text}${second.unit ? ` ${second.unit}` : ''}`}
+                                    </div>
+                                ) : null}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+            case 'battery': {
+                const power = this.itemsOf(t)[0];
+                const second = power ? this.valueText(power.state, power.unit, power.decimals) : null;
+                const secondText = second ? `${second.text}${second.unit ? ` ${second.unit}` : ''}` : '';
+                const fill = alerted(t, num) ? COLOR.alert : cssColor(t.color) || COLOR.battery;
+                const bolt = this.charging(t) === true;
+                const symbol = (sw: number, sh: number): React.JSX.Element => (
+                    <div style={{ display: 'flex', alignItems: 'center', flex: 'none' }}>
+                        <div
+                            style={{
+                                position: 'relative',
+                                width: sw,
+                                height: sh,
+                                border: `${px(2)}px solid ${COLOR.label}`,
+                                borderRadius: px(5),
+                                padding: px(2),
+                                boxSizing: 'border-box',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: `${frac * 100}%`,
+                                    height: '100%',
+                                    background: fill,
+                                    borderRadius: px(2),
+                                }}
+                            />
+                            {bolt ? (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <TileIcon
+                                        name="flash"
+                                        size={Math.round(sh * 0.7)}
+                                        color="#fff"
+                                    />
+                                </div>
+                            ) : null}
+                        </div>
+                        <div
+                            style={{
+                                width: px(3),
+                                height: Math.round(sh * 0.4),
+                                background: COLOR.label,
+                                borderRadius: `0 ${px(1)}px ${px(1)}px 0`,
+                            }}
+                        />
+                    </div>
+                );
+                const valueEl = (size: number): React.JSX.Element => (
+                    <div style={{ fontSize: px(size), color: valueColor, whiteSpace: 'nowrap' }}>{shown}</div>
+                );
+                if (t.size === 'q') {
+                    return (
+                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: px(4) }}>
+                            {label}
+                            {symbol(w - px(14) - px(10), px(36))}
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'baseline',
+                                    marginTop: 'auto',
+                                }}
+                            >
+                                {valueEl(16)}
+                                <span style={{ fontSize: px(11), color: COLOR.label }}>{secondText}</span>
+                            </div>
+                        </div>
+                    );
+                }
+                if (t.size === 'l') {
+                    return (
+                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            {label}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: px(12), flex: 1 }}>
+                                {symbol(px(120), px(50))}
+                                <div>
+                                    {valueEl(26)}
+                                    <div style={{ fontSize: px(14), color: COLOR.label }}>{secondText}</div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: px(8), height: '100%' }}>
+                        {t.size === 'w' ? symbol(px(60), px(28)) : symbol(px(44), px(24))}
+                        <div
+                            style={{
+                                flex: 1,
+                                minWidth: 0,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                height: '100%',
+                            }}
+                        >
+                            {label}
+                            {valueEl(14)}
+                        </div>
+                        {t.size === 'w' && secondText ? (
+                            <span style={{ fontSize: px(14), whiteSpace: 'nowrap' }}>{secondText}</span>
+                        ) : null}
+                    </div>
+                );
+            }
+            case 'status': {
+                const lit = isOnValue(value);
+                const litColor = this.accentOf(t);
+                const unitOf = t.unit || this.state.units[t.state] || '';
+                const v = this.valueText(t.state, unitOf, this.decimalsOf(t, unitOf));
+                const statusText = `${v.text}${v.unit ? ` ${v.unit}` : ''}`;
+                const icon = t.icon ? (
+                    <TileIcon
+                        name={t.icon}
+                        size={px(t.size === 'q' ? 30 : 20)}
+                        color={lit ? litColor : COLOR.label}
+                    />
+                ) : null;
+                const valueStyle: React.CSSProperties = {
+                    fontSize: t.size === 'q' ? px(16) : px(12),
+                    color: lit ? litColor : '#fff',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                };
+                return t.size === 'q' ? (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            height: '100%',
+                            textAlign: 'center',
+                            gap: px(3),
+                        }}
+                    >
+                        {icon}
+                        <div style={{ color: COLOR.label, fontSize: px(10) }}>{name}</div>
+                        <div style={{ ...valueStyle, marginTop: 'auto' }}>{statusText}</div>
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: px(8), height: '100%' }}>
+                        {icon}
+                        <div
+                            style={{
+                                flex: 1,
+                                minWidth: 0,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                height: '100%',
+                            }}
+                        >
+                            {label}
+                            <div style={valueStyle}>{statusText}</div>
+                        </div>
+                    </div>
+                );
+            }
             default:
                 return h <= px(53) && w <= px(151) ? (
                     <div
@@ -1469,7 +1962,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
             t.type === 'dimmer' && t.state2
                 ? !!this.state.values[t.state2]
                 : raw === true || (typeof raw === 'number' && raw > 0);
-        const flat = ['value', 'bar', 'chart', 'switch'].includes(t.type) && W / H >= 1.8;
+        const flat = ['value', 'bar', 'chart', 'switch', 'status'].includes(t.type) && W / H >= 1.8;
         const chartFlat = flat && t.type === 'chart';
         const showIcon = !!t.icon && !(t.type === 'switch' && t.size === 'q');
         const iconOnly = !!t.iconOnly && !!t.icon;
@@ -1842,6 +2335,651 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                         )}
                     </div>
                 );
+            case 'status': {
+                const lit = isOnValue(raw);
+                const unitOf = t.unit || this.state.units[t.state] || '';
+                const v = this.valueText(t.state, unitOf, decimals);
+                const square = !flat && W / H < 1;
+                const iconSize = square ? clamp(28, 34 * cqmin, 120) : headFont * 1.9;
+                return (
+                    <div style={body}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: square ? 'column' : 'row',
+                                alignItems: square ? 'flex-start' : 'center',
+                                gap: square ? px(3 * cqmin) : '0.4em',
+                                fontSize: px(headFont),
+                                color: TAB.muted,
+                                flex: flat ? '1 1 auto' : undefined,
+                                minWidth: 0,
+                            }}
+                        >
+                            {t.icon ? (
+                                <TileIcon
+                                    name={t.icon}
+                                    size={px(iconSize)}
+                                    color={lit ? accent : TAB.muted}
+                                />
+                            ) : null}
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {name}
+                            </span>
+                        </div>
+                        <div
+                            style={{
+                                marginTop: flat ? 0 : 'auto',
+                                fontSize: px(
+                                    v.unit || Number.isFinite(v.num)
+                                        ? flat
+                                            ? clamp(14, Math.min(36 * cqh, 13 * cqw), 90)
+                                            : clamp(16, 30 * cqmin, 120)
+                                        : clamp(14, 15 * cqmin, 64),
+                                ),
+                                fontWeight: 600,
+                                lineHeight: 1.1,
+                                color: lit ? accent : TAB.text,
+                                whiteSpace: 'nowrap',
+                            }}
+                        >
+                            {v.text}
+                            {v.unit ? (
+                                <span
+                                    style={{
+                                        fontSize: '0.5em',
+                                        fontWeight: 400,
+                                        marginLeft: '0.15em',
+                                        color: TAB.muted,
+                                    }}
+                                >
+                                    {v.unit}
+                                </span>
+                            ) : null}
+                        </div>
+                    </div>
+                );
+            }
+            case 'group': {
+                const items = this.itemsOf(t);
+                const n = Math.max(1, items.length);
+                const flatGroup = W / H >= 1.8;
+                const line = `1px solid ${TAB.track}`;
+                return (
+                    <div style={body}>
+                        {t.title || (t.icon && !flatGroup) ? (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.4em',
+                                    fontSize: px(headFont),
+                                    color: cssColor(t.color) || TAB.muted,
+                                }}
+                            >
+                                {t.icon ? (
+                                    <TileIcon
+                                        name={t.icon}
+                                        size={px(headFont * 1.5)}
+                                        color={TAB.muted}
+                                    />
+                                ) : null}
+                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {t.title}
+                                </span>
+                            </div>
+                        ) : null}
+                        <div
+                            style={{
+                                flex: 1,
+                                minHeight: 0,
+                                display: 'flex',
+                                flexDirection: flatGroup ? 'row' : 'column',
+                                justifyContent: 'space-evenly',
+                                alignItems: flatGroup ? 'stretch' : undefined,
+                            }}
+                        >
+                            {items.map((item, i) => {
+                                const v = this.valueText(item.state, item.unit, item.decimals);
+                                return (
+                                    <div
+                                        key={item.index}
+                                        style={{
+                                            display: 'flex',
+                                            flex: flatGroup ? '1 1 0' : undefined,
+                                            flexDirection: flatGroup ? 'column' : 'row',
+                                            justifyContent: flatGroup ? 'center' : 'space-between',
+                                            alignItems: flatGroup ? 'flex-start' : 'baseline',
+                                            gap: flatGroup ? px(cqh) : px(4 * cqmin),
+                                            minWidth: 0,
+                                            padding: flatGroup
+                                                ? `0 ${px(3 * cqw)}px 0 ${i ? px(3 * cqw) : 0}px`
+                                                : `${px(1.5 * cqmin)}px 0`,
+                                            borderTop: !flatGroup && i ? line : undefined,
+                                            borderLeft: flatGroup && i ? line : undefined,
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                minWidth: 0,
+                                                maxWidth: '100%',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                color: TAB.muted,
+                                                fontSize: px(
+                                                    flatGroup
+                                                        ? clamp(11, 18 * cqh, 28)
+                                                        : clamp(11, Math.min((32 * cqh) / n, 10 * cqw), 30),
+                                                ),
+                                            }}
+                                        >
+                                            {item.label}
+                                        </span>
+                                        <span
+                                            style={{
+                                                flex: 'none',
+                                                fontWeight: 600,
+                                                whiteSpace: 'nowrap',
+                                                color: alerted(t, v.num) ? TAB.alert : cssColor(t.color) || TAB.text,
+                                                fontSize: px(
+                                                    flatGroup
+                                                        ? clamp(14, Math.min(32 * cqh, (30 * cqw) / n), 80)
+                                                        : clamp(14, Math.min((46 * cqh) / n, 15 * cqw), 72),
+                                                ),
+                                            }}
+                                        >
+                                            {v.text}
+                                            {v.unit ? (
+                                                <span
+                                                    style={{
+                                                        fontSize: '0.5em',
+                                                        fontWeight: 400,
+                                                        marginLeft: '0.15em',
+                                                        color: TAB.muted,
+                                                    }}
+                                                >
+                                                    {v.unit}
+                                                </span>
+                                            ) : null}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            }
+            case 'level':
+            case 'battery': {
+                const amount = this.itemsOf(t)[0];
+                const second = amount ? this.valueText(amount.state, amount.unit, amount.decimals) : null;
+                const flatGauge = W / H >= 1.8;
+                const tall = W / H <= 1.1;
+                const fill =
+                    Number.isFinite(num) && alerted(t, num)
+                        ? TAB.alert
+                        : cssColor(t.color) || (t.type === 'battery' ? TAB.ok : accent);
+                const valueSize = flatGauge ? clamp(14, Math.min(36 * cqh, 12 * cqw), 90) : clamp(16, 24 * cqmin, 110);
+                const amountSize = flatGauge ? clamp(11, 20 * cqh, 36) : clamp(12, 12 * cqmin, 44);
+                const readout = (
+                    <div
+                        style={{
+                            flex: t.type === 'battery' && tall ? 'none' : 1,
+                            minWidth: 0,
+                            display: 'flex',
+                            flexDirection: t.type === 'battery' && tall ? 'row' : 'column',
+                            justifyContent: t.type === 'battery' && tall ? 'space-between' : 'flex-end',
+                            alignItems: t.type === 'battery' && tall ? 'baseline' : undefined,
+                            gap: px(cqmin),
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: px(valueSize),
+                                fontWeight: 600,
+                                lineHeight: 1.1,
+                                whiteSpace: 'nowrap',
+                                // the charge of a battery is white unless a colour or a threshold says otherwise
+                                color:
+                                    t.type === 'battery'
+                                        ? Number.isFinite(num) && alerted(t, num)
+                                            ? TAB.alert
+                                            : cssColor(t.color) || TAB.text
+                                        : color,
+                            }}
+                        >
+                            {Number.isFinite(num) ? (
+                                <>
+                                    {fmt(num)}
+                                    {unit ? (
+                                        <span
+                                            style={{
+                                                fontSize: '0.5em',
+                                                fontWeight: 400,
+                                                marginLeft: '0.15em',
+                                                color: TAB.muted,
+                                            }}
+                                        >
+                                            {unit}
+                                        </span>
+                                    ) : null}
+                                </>
+                            ) : (
+                                '–'
+                            )}
+                        </div>
+                        {second ? (
+                            <div style={{ fontSize: px(amountSize), color: TAB.muted, whiteSpace: 'nowrap' }}>
+                                {second.text}
+                                {second.unit ? <span style={{ marginLeft: '0.25em' }}>{second.unit}</span> : null}
+                            </div>
+                        ) : null}
+                    </div>
+                );
+                const picture =
+                    t.type === 'level' ? (
+                        <div
+                            style={{
+                                position: 'relative',
+                                flex: 'none',
+                                width: px(clamp(22, 24 * cqmin, 110)),
+                                border: `${px(Math.max(2, 1.4 * cqmin))}px solid ${TAB.muted}`,
+                                borderRadius: px(clamp(5, 4 * cqmin, 16)),
+                                background: TAB.track,
+                                overflow: 'hidden',
+                                boxSizing: 'border-box',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    height: `${frac * 100}%`,
+                                    background: fill,
+                                }}
+                            />
+                            {[25, 50, 75].map(at => (
+                                <div
+                                    key={at}
+                                    style={{
+                                        position: 'absolute',
+                                        left: 0,
+                                        bottom: `${at}%`,
+                                        width: '32%',
+                                        height: Math.max(1, px(0.8 * cqmin)),
+                                        background: TAB.text,
+                                        opacity: 0.55,
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div
+                            style={{
+                                flex: tall ? 'none' : flatGauge ? '0 0 38%' : 1,
+                                width: tall ? '100%' : undefined,
+                                minWidth: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                alignSelf: 'center',
+                                height: tall
+                                    ? px(clamp(24, 24 * cqw, 120))
+                                    : flatGauge
+                                      ? '60%'
+                                      : px(clamp(24, 30 * cqh, 140)),
+                            }}
+                        >
+                            <div
+                                style={{
+                                    position: 'relative',
+                                    flex: 1,
+                                    height: '100%',
+                                    padding: px(Math.max(2, 1.3 * cqmin)),
+                                    border: `${px(Math.max(2, 1.6 * cqmin))}px solid ${TAB.muted}`,
+                                    borderRadius: px(clamp(4, 3.5 * cqmin, 14)),
+                                    boxSizing: 'border-box',
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: `${frac * 100}%`,
+                                        height: '100%',
+                                        borderRadius: px(clamp(2, 2 * cqmin, 9)),
+                                        background: fill,
+                                    }}
+                                />
+                                {this.charging(t) === true ? (
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        <TileIcon
+                                            name="flash"
+                                            size={px(clamp(24, 24 * cqw, 120) * 0.6)}
+                                            color={TAB.text}
+                                        />
+                                    </div>
+                                ) : null}
+                            </div>
+                            <div
+                                style={{
+                                    flex: 'none',
+                                    width: px(Math.max(3, 2.4 * cqmin)),
+                                    height: '38%',
+                                    marginLeft: px(Math.max(1, 0.6 * cqmin)),
+                                    borderRadius: '0 3px 3px 0',
+                                    background: TAB.muted,
+                                }}
+                            />
+                        </div>
+                    );
+                return (
+                    <div style={body}>
+                        {head}
+                        <div
+                            style={{
+                                flex: 1,
+                                minHeight: 0,
+                                display: 'flex',
+                                flexDirection: t.type === 'battery' && tall ? 'column' : 'row',
+                                alignItems: 'stretch',
+                                gap: px(t.type === 'battery' && tall ? 4 * cqmin : 7 * cqmin),
+                            }}
+                        >
+                            {picture}
+                            {readout}
+                        </div>
+                    </div>
+                );
+            }
+            case 'map':
+            case 'camera': {
+                const camera = t.type === 'camera';
+                return (
+                    <div style={{ ...body, padding: 0, gap: 0 }}>
+                        {t.label || t.icon ? (
+                            <div style={{ padding: `${px(4 * cqmin)}px ${px(6 * cqmin)}px ${px(3 * cqmin)}px` }}>
+                                {head}
+                            </div>
+                        ) : null}
+                        <div
+                            style={{
+                                flex: 1,
+                                minHeight: 0,
+                                position: 'relative',
+                                background: camera
+                                    ? '#0b0f13'
+                                    : 'linear-gradient(135deg, #aad3df 0 55%, #f2efe9 55% 100%)',
+                                display: 'grid',
+                                placeItems: 'center',
+                            }}
+                        >
+                            {camera ? (
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width={px(clamp(20, 22 * cqmin, 80))}
+                                    height={px(clamp(20, 22 * cqmin, 80))}
+                                >
+                                    <path
+                                        d={mdiCctv}
+                                        fill={TAB.muted}
+                                    />
+                                </svg>
+                            ) : (
+                                <svg
+                                    viewBox="-12 -14 24 26"
+                                    width={px(clamp(16, 14 * cqmin, 48))}
+                                    height={px(clamp(16, 14 * cqmin, 48))}
+                                >
+                                    <path
+                                        d="M0 -14 L9 10 L0 5 L-9 10 Z"
+                                        fill={accent}
+                                        stroke="#fff"
+                                        strokeWidth={2}
+                                    />
+                                </svg>
+                            )}
+                            {camera ? null : (
+                                <span
+                                    style={{
+                                        position: 'absolute',
+                                        right: 0,
+                                        bottom: 0,
+                                        fontSize: px(10),
+                                        padding: '0 4px',
+                                        background: 'rgba(255,255,255,0.75)',
+                                        color: '#333',
+                                    }}
+                                >
+                                    © OpenStreetMap
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
+            case 'flow': {
+                const titleHead =
+                    t.title || t.icon ? (
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4em',
+                                minWidth: 0,
+                                fontSize: px(headFont),
+                                color: TAB.muted,
+                            }}
+                        >
+                            {t.icon ? (
+                                <TileIcon
+                                    name={t.icon}
+                                    size={px(headFont * 1.5)}
+                                    color={TAB.muted}
+                                />
+                            ) : null}
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {t.title}
+                            </span>
+                        </div>
+                    ) : null;
+                const value = (id: string | undefined): number | null => {
+                    const v = id ? this.state.values[id] : undefined;
+                    return typeof v === 'number' ? v : null;
+                };
+                const power = (v: number | null): string =>
+                    v === null
+                        ? '–'
+                        : Math.abs(v) >= 1000
+                          ? `${fmt(Math.abs(v) / 1000, 1)} kW`
+                          : `${fmt(Math.abs(v), 0)} W`;
+                const parts = FLOW_PARTS.slice(0, 4).filter(([s], i) => i === 3 || !!t[s]);
+                const spots = [
+                    [18, 22],
+                    [18, 68],
+                    [82, 22],
+                    [82, 68],
+                ];
+                return (
+                    <div style={body}>
+                        {titleHead}
+                        <svg
+                            viewBox="0 0 100 100"
+                            preserveAspectRatio="none"
+                            style={{ flex: 1, minHeight: 0, width: '100%' }}
+                        >
+                            {parts.map(([s, , , color]) => {
+                                const [x, y] = spots[FLOW_PARTS.findIndex(p => p[0] === s)];
+                                return (
+                                    <line
+                                        key={s}
+                                        x1={x}
+                                        y1={y}
+                                        x2={50}
+                                        y2={45}
+                                        stroke={color}
+                                        strokeOpacity={0.6}
+                                        strokeWidth={1}
+                                        vectorEffect="non-scaling-stroke"
+                                    />
+                                );
+                            })}
+                        </svg>
+                        {parts.map(([s, l, key, color, icon]) => {
+                            const [x, y] = spots[FLOW_PARTS.findIndex(p => p[0] === s)];
+                            const r = clamp(10, 9 * cqmin, 44);
+                            return (
+                                <div
+                                    key={s}
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${x}%`,
+                                        top: `${y}%`,
+                                        transform: 'translate(-50%, -50%)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        fontSize: px(clamp(9, 5 * cqmin, 18)),
+                                        color: TAB.text,
+                                        whiteSpace: 'nowrap',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            width: px(r * 2),
+                                            height: px(r * 2),
+                                            borderRadius: '50%',
+                                            border: `2px solid ${color}`,
+                                            background: TAB.screen,
+                                            display: 'grid',
+                                            placeItems: 'center',
+                                        }}
+                                    >
+                                        {icon ? (
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                width={px(r * 1.1)}
+                                                height={px(r * 1.1)}
+                                            >
+                                                <path
+                                                    d={icon}
+                                                    fill={color}
+                                                />
+                                            </svg>
+                                        ) : (
+                                            <TileIcon
+                                                name="battery"
+                                                size={px(r * 1.1)}
+                                                color={color}
+                                            />
+                                        )}
+                                    </div>
+                                    <b>{power(s === 'state4' && !t.state4 ? null : value(t[s]))}</b>
+                                    <span style={{ color: TAB.muted }}>
+                                        {(l && t[l]) || I18n.t(FLOW_NAMES[key] || key)}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            }
+            case 'trend': {
+                const titleHead =
+                    t.title || t.icon ? (
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4em',
+                                minWidth: 0,
+                                fontSize: px(headFont),
+                                color: TAB.muted,
+                            }}
+                        >
+                            {t.icon ? (
+                                <TileIcon
+                                    name={t.icon}
+                                    size={px(headFont * 1.5)}
+                                    color={TAB.muted}
+                                />
+                            ) : null}
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {t.title}
+                            </span>
+                        </div>
+                    ) : null;
+                const rows = (['state', 'state2', 'state3', 'state4'] as const).filter(s => !!t[s]);
+                return (
+                    <div style={body}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6em' }}>
+                            {titleHead}
+                            <span
+                                style={{
+                                    marginLeft: 'auto',
+                                    display: 'flex',
+                                    gap: 3,
+                                    fontSize: px(clamp(9, 6 * cqmin, 16)),
+                                    color: TAB.muted,
+                                }}
+                            >
+                                {['6h', '24h', '7d', '30d'].map(c => (
+                                    <span
+                                        key={c}
+                                        style={{
+                                            padding: '0 5px',
+                                            borderRadius: 99,
+                                            border: `1px solid ${TAB.track}`,
+                                            background: c === '24h' ? accent : undefined,
+                                            color: c === '24h' ? '#fff' : undefined,
+                                        }}
+                                    >
+                                        {c}
+                                    </span>
+                                ))}
+                            </span>
+                        </div>
+                        <svg
+                            viewBox="0 0 100 40"
+                            preserveAspectRatio="none"
+                            style={{ flex: 1, minHeight: 0, width: '100%' }}
+                        >
+                            {[10, 20, 30].map(y => (
+                                <line
+                                    key={y}
+                                    x1={0}
+                                    x2={100}
+                                    y1={y}
+                                    y2={y}
+                                    stroke={TAB.track}
+                                    strokeWidth={0.5}
+                                    vectorEffect="non-scaling-stroke"
+                                />
+                            ))}
+                            {rows.map((s, i) => (
+                                <polyline
+                                    key={s}
+                                    fill="none"
+                                    stroke={i === 0 ? accent : SERIES_COLORS[i]}
+                                    strokeWidth={2}
+                                    vectorEffect="non-scaling-stroke"
+                                    points={Array.from({ length: 21 }, (_v, k) => {
+                                        const y = 20 + 12 * Math.sin(k / 3 + i * 1.7) * (1 - i * 0.2);
+                                        return `${k * 5},${y.toFixed(1)}`;
+                                    }).join(' ')}
+                                />
+                            ))}
+                        </svg>
+                    </div>
+                );
+            }
             default:
                 return (
                     <div style={body}>
@@ -1954,8 +3092,9 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                     const problem = extra.has(index) ? 'sd_too_many' : problemOf(tile, tablet);
                     const dropOn = this.state.dropOn?.index === index ? this.state.dropOn : null;
                     const on =
-                        tile.type === 'switch' &&
-                        (this.state.values[tile.state] === true || Number(this.state.values[tile.state]) > 0);
+                        (tile.type === 'switch' &&
+                            (this.state.values[tile.state] === true || Number(this.state.values[tile.state]) > 0)) ||
+                        (tile.type === 'status' && isOnValue(this.state.values[tile.state]));
                     return (
                         <div
                             key={index}
@@ -1982,7 +3121,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                                 display: !tablet && tile.type === 'thermostat' ? 'flex' : undefined,
                                 flexDirection: !tablet && tile.type === 'thermostat' ? 'column' : undefined,
                                 background: tablet
-                                    ? on && (tile.type === 'switch' || tile.type === 'dimmer')
+                                    ? on && (tile.type === 'switch' || tile.type === 'dimmer' || tile.type === 'status')
                                         ? TAB.tileOn
                                         : cssColor(tile.background) || TAB.tile
                                     : on
@@ -2054,13 +3193,13 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
         );
     }
 
-    renderStateField(index: number, t: TileRow, attr: StateAttr, label: string): React.JSX.Element {
+    renderStateField(index: number, t: TileRow, attr: StateAttr, label: string, arg?: number): React.JSX.Element {
         return (
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flex: 1 }}>
                 <TextField
                     variant="standard"
                     fullWidth
-                    label={I18n.t(label)}
+                    label={arg === undefined ? I18n.t(label) : I18n.t(label, String(arg))}
                     value={t[attr] || ''}
                     onChange={e => this.update(index, { [attr]: e.target.value })}
                     onFocus={e => this.setState({ typedFrom: e.target.value })}
@@ -2083,6 +3222,215 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
         );
     }
 
+    /**
+     * The rows of a group: state, name and unit of each, one row more than those set (row 1 is the state, label and
+     * unit of the tile), and the title above them.
+     */
+    renderGroupRows(index: number, t: TileRow): React.JSX.Element {
+        const rows: [StateAttr, 'label' | 'label2' | 'label3' | 'label4', 'unit' | 'unit2' | 'unit3' | 'unit4'][] = [
+            ['state', 'label', 'unit'],
+            ['state2', 'label2', 'unit2'],
+            ['state3', 'label3', 'unit3'],
+            ['state4', 'label4', 'unit4'],
+        ];
+        const last = rows.reduce((n, [s], i) => (t[s] ? i + 1 : n), 0);
+        return (
+            <>
+                <TextField
+                    variant="standard"
+                    label={I18n.t('sd_title')}
+                    value={t.title || ''}
+                    slotProps={{ htmlInput: { maxLength: 24 } }}
+                    onChange={e => this.update(index, { title: e.target.value })}
+                />
+                {rows.slice(0, Math.min(4, last + 1)).map(([s, l, u], i) => {
+                    const id = t[s] || '';
+                    return (
+                        <Box
+                            key={s}
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 0.5,
+                                pl: 1,
+                                borderLeft: '2px solid',
+                                borderColor: 'divider',
+                            }}
+                        >
+                            {this.renderStateField(index, t, s, 'sd_row_state', i + 1)}
+                            {id ? (
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <TextField
+                                        variant="standard"
+                                        sx={{ flex: 2 }}
+                                        label={I18n.t('sd_label')}
+                                        placeholder={this.state.names[id] || ''}
+                                        value={t[l] || ''}
+                                        slotProps={{ htmlInput: { maxLength: 24 } }}
+                                        onChange={e => this.update(index, { [l]: e.target.value })}
+                                    />
+                                    <TextField
+                                        variant="standard"
+                                        sx={{ flex: 1 }}
+                                        label={I18n.t('sd_unit')}
+                                        placeholder={this.state.units[id] || ''}
+                                        value={t[u] || ''}
+                                        slotProps={{ htmlInput: { maxLength: 8 } }}
+                                        onChange={e => this.update(index, { [u]: e.target.value })}
+                                    />
+                                </Box>
+                            ) : null}
+                        </Box>
+                    );
+                })}
+            </>
+        );
+    }
+
+    /** The parts of a flow: solar, battery, grid, consumption with their names, and the charge of the battery */
+    renderFlowParts(index: number, t: TileRow): React.JSX.Element {
+        return (
+            <>
+                <TextField
+                    variant="standard"
+                    label={I18n.t('sd_title')}
+                    value={t.title || ''}
+                    slotProps={{ htmlInput: { maxLength: 24 } }}
+                    onChange={e => this.update(index, { title: e.target.value })}
+                />
+                {FLOW_PARTS.map(([s, l, key, color]) => (
+                    <Box
+                        key={s}
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.5,
+                            pl: 1,
+                            borderLeft: `2px solid ${color}`,
+                        }}
+                    >
+                        {this.renderStateField(index, t, s, key)}
+                        {l && t[s] ? (
+                            <TextField
+                                variant="standard"
+                                label={I18n.t('sd_label')}
+                                placeholder={I18n.t(FLOW_NAMES[key] || key)}
+                                value={t[l] || ''}
+                                slotProps={{ htmlInput: { maxLength: 24 } }}
+                                onChange={e => this.update(index, { [l]: e.target.value })}
+                            />
+                        ) : null}
+                    </Box>
+                ))}
+                <Typography
+                    variant="caption"
+                    sx={{ opacity: 0.7 }}
+                >
+                    {I18n.t('sd_flow_hint')}
+                </Typography>
+            </>
+        );
+    }
+
+    /** Position, course and speed of a map, the nmea instance of its AIS targets and anchor, its tile servers */
+    renderMapFields(index: number, t: TileRow): React.JSX.Element {
+        return (
+            <>
+                {this.renderStateField(index, t, 'state', 'sd_map_lat')}
+                {this.renderStateField(index, t, 'state2', 'sd_map_lon')}
+                {this.renderStateField(index, t, 'state3', 'sd_map_course')}
+                {this.renderStateField(index, t, 'state4', 'sd_map_speed')}
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                    <TextField
+                        variant="standard"
+                        sx={{ flex: 1 }}
+                        label={I18n.t('sd_map_nmea')}
+                        placeholder="nmea.0"
+                        value={t.nmea || ''}
+                        onChange={e => this.update(index, { nmea: e.target.value.trim() })}
+                    />
+                    <TextField
+                        variant="standard"
+                        type="number"
+                        sx={{ width: 110 }}
+                        label={I18n.t('sd_map_hours')}
+                        placeholder="24"
+                        value={t.hours ?? ''}
+                        slotProps={{ htmlInput: { min: 1, max: 720 } }}
+                        onChange={e =>
+                            this.update(index, { hours: e.target.value === '' ? '' : Number(e.target.value) })
+                        }
+                    />
+                </Box>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={!!t.seamarks}
+                            onChange={e => this.update(index, { seamarks: e.target.checked })}
+                        />
+                    }
+                    label={I18n.t('sd_map_seamarks')}
+                />
+                <TextField
+                    variant="standard"
+                    label={I18n.t('sd_map_tiles')}
+                    placeholder="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    value={t.url || ''}
+                    onChange={e => this.update(index, { url: e.target.value.trim() })}
+                />
+            </>
+        );
+    }
+
+    /** The picture of a camera: its address (or a state holding one) and how often it is fetched */
+    renderCameraFields(index: number, t: TileRow): React.JSX.Element {
+        return (
+            <>
+                <TextField
+                    variant="standard"
+                    label={I18n.t('sd_camera_url')}
+                    placeholder="http://192.168.1.10:5000/api/cam/latest.jpg"
+                    value={t.url || ''}
+                    helperText={I18n.t('sd_camera_url_hint')}
+                    onChange={e => this.update(index, { url: e.target.value.trim() })}
+                />
+                {this.renderStateField(index, t, 'state', 'sd_camera_state')}
+                <TextField
+                    variant="standard"
+                    type="number"
+                    label={I18n.t('sd_camera_interval')}
+                    placeholder="5"
+                    value={t.interval ?? ''}
+                    helperText={I18n.t('sd_camera_interval_hint')}
+                    slotProps={{ htmlInput: { min: 0, max: 3600 } }}
+                    onChange={e =>
+                        this.update(index, { interval: e.target.value === '' ? '' : Number(e.target.value) })
+                    }
+                />
+            </>
+        );
+    }
+
+    /** The second state of a level (its amount) or a battery (its power) with its unit in one line */
+    renderSecondAmount(index: number, t: TileRow, label: string): React.JSX.Element {
+        return (
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
+                {this.renderStateField(index, t, 'state2', label)}
+                {t.state2 ? (
+                    <TextField
+                        variant="standard"
+                        sx={{ width: 70 }}
+                        label={I18n.t('sd_unit')}
+                        placeholder={this.state.units[t.state2] || ''}
+                        value={t.unit2 || ''}
+                        slotProps={{ htmlInput: { maxLength: 8 } }}
+                        onChange={e => this.update(index, { unit2: e.target.value })}
+                    />
+                ) : null}
+            </Box>
+        );
+    }
+
     renderPanel(): React.JSX.Element {
         const index = this.state.selected;
         const t = this.tiles()[index];
@@ -2098,9 +3446,25 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
         }
         const tiles = this.tiles();
         const num = (v: string): number | '' => (v === '' ? '' : Number(v));
-        const scaled = t.type === 'gauge' || t.type === 'bar' || t.type === 'chart' || t.type === 'thermostat';
+        const scaled =
+            t.type === 'trend' ||
+            t.type === 'gauge' ||
+            t.type === 'bar' ||
+            t.type === 'chart' ||
+            t.type === 'thermostat' ||
+            t.type === 'level' ||
+            t.type === 'battery';
         const stateLabel =
-            t.type === 'dimmer' ? 'sd_level_state' : t.type === 'thermostat' ? 'sd_current_state' : 'sd_state';
+            t.type === 'dimmer'
+                ? 'sd_level_state'
+                : t.type === 'thermostat'
+                  ? 'sd_current_state'
+                  : t.type === 'level'
+                    ? 'sd_fill_state'
+                    : t.type === 'battery'
+                      ? 'sd_soc_state'
+                      : 'sd_state';
+        const newKind = FIRMWARE_230_KINDS.includes(t.type);
         return (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minWidth: 260, maxWidth: 360, flex: 1 }}>
                 {problemOf(t, this.isTablet(t.satellite)) ? (
@@ -2136,15 +3500,25 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                     value={t.type}
                     onChange={e => this.changeKind(index, e.target.value as Kind)}
                 >
-                    {(Object.keys(KINDS) as Kind[]).map(k => (
-                        <MenuItem
-                            key={k}
-                            value={k}
-                        >
-                            {I18n.t(KIND_KEYS[k])}
-                        </MenuItem>
-                    ))}
+                    {(Object.keys(KINDS) as Kind[])
+                        .filter(k => k === t.type || !TABLET_KINDS.includes(k) || this.isTablet(t.satellite))
+                        .map(k => (
+                            <MenuItem
+                                key={k}
+                                value={k}
+                            >
+                                {I18n.t(KIND_KEYS[k])}
+                            </MenuItem>
+                        ))}
                 </TextField>
+                {newKind && !this.isTablet(t.satellite) ? (
+                    <Typography
+                        variant="caption"
+                        sx={{ opacity: 0.7, mt: -1 }}
+                    >
+                        {I18n.t('sd_needs_new_firmware')}
+                    </Typography>
+                ) : null}
                 <Box>
                     <Typography
                         variant="caption"
@@ -2183,11 +3557,20 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                         ))}
                     </ToggleButtonGroup>
                 </Box>
-                {this.renderStateField(index, t, 'state', stateLabel)}
+                {t.type === 'group' || t.type === 'trend' ? this.renderGroupRows(index, t) : null}
+                {t.type === 'flow' ? this.renderFlowParts(index, t) : null}
+                {t.type === 'map' ? this.renderMapFields(index, t) : null}
+                {t.type === 'camera' ? this.renderCameraFields(index, t) : null}
+                {['group', 'trend', 'flow', 'map', 'camera'].includes(t.type)
+                    ? null
+                    : this.renderStateField(index, t, 'state', stateLabel)}
                 {t.type === 'dimmer' ? this.renderStateField(index, t, 'state2', 'sd_onoff_state') : null}
                 {t.type === 'thermostat' ? this.renderStateField(index, t, 'state2', 'sd_target_state') : null}
                 {t.type === 'thermostat' ? this.renderStateField(index, t, 'state3', 'sd_relay_state') : null}
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                {t.type === 'level' ? this.renderSecondAmount(index, t, 'sd_amount_state') : null}
+                {t.type === 'battery' ? this.renderSecondAmount(index, t, 'sd_power_state') : null}
+                {t.type === 'battery' ? this.renderStateField(index, t, 'state3', 'sd_charging_state') : null}
+                <Box sx={{ display: TITLE_KINDS.includes(t.type) ? 'none' : 'flex', gap: 1 }}>
                     <TextField
                         variant="standard"
                         sx={{ flex: 2 }}
@@ -2197,7 +3580,11 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                         slotProps={{ htmlInput: { maxLength: 24 } }}
                         onChange={e => this.update(index, { label: e.target.value })}
                     />
-                    {t.type !== 'dimmer' && t.type !== 'button' && t.type !== 'switch' ? (
+                    {t.type !== 'dimmer' &&
+                    t.type !== 'button' &&
+                    t.type !== 'switch' &&
+                    t.type !== 'map' &&
+                    t.type !== 'camera' ? (
                         <TextField
                             variant="standard"
                             sx={{ flex: 1 }}
@@ -2208,7 +3595,8 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                         />
                     ) : null}
                 </Box>
-                {t.type === 'button' || t.type === 'switch' || t.size !== 'q' ? (
+                {t.type !== 'group' &&
+                (t.type === 'button' || t.type === 'switch' || t.type === 'status' || t.size !== 'q') ? (
                     <TextField
                         select
                         variant="standard"
@@ -2244,7 +3632,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                         label={I18n.t('sd_hide_toggle')}
                     />
                 ) : null}
-                {t.icon && t.type !== 'button' && t.size !== 'q' ? (
+                {t.icon && t.type !== 'button' && t.size !== 'q' && !newKind && !TABLET_KINDS.includes(t.type) ? (
                     <FormControlLabel
                         control={
                             <Checkbox
@@ -2261,7 +3649,7 @@ class TileEditor extends ConfigGeneric<ConfigGenericProps, TileEditorState> {
                 </Box>
                 {this.renderStateField(index, t, 'bgState', 'sd_bg_state')}
                 {t.bgState ? this.renderColorField(index, t, 'bgColor', 'sd_bg_color', '#7F1D1D') : null}
-                {t.type === 'value' || scaled ? (
+                {t.type === 'value' || t.type === 'group' || t.type === 'status' || scaled ? (
                     <Box sx={{ display: 'flex', gap: 1 }}>
                         <TextField
                             variant="standard"

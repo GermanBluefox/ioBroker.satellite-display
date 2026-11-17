@@ -86,19 +86,33 @@ body {
     color: var(--text);
 }
 
+/* a tap on a dot goes to its page: each dot is a button the width of a fingertip and the height of the bar */
 #dots {
     display: flex;
-    gap: 6px;
+    align-self: stretch;
 }
 
-#dots i {
+#dots button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(26px, 4.5vmin, 44px);
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#dots button::before {
+    content: '';
     width: 7px;
     height: 7px;
     border-radius: 50%;
     background: var(--track);
 }
 
-#dots i.on {
+#dots button.on::before {
     background: var(--text);
 }
 
@@ -209,7 +223,9 @@ body {
     fill: var(--c);
 }
 
-.value {
+/* in the body: the tile of a value tile is `.tile.value` itself, and a plain `.value` made it, and with it the name
+   in its head, bold (2026-11-17) */
+.body .value {
     font-size: clamp(16px, 30cqmin, 120px);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -293,7 +309,9 @@ body {
         font-size: clamp(14px, min(28cqh, 12cqw), 72px);
     }
 
-    .body.rowable .toggle {
+    /* more specific than `.tile.switch .toggle` below: at the same weight that one won by coming later, and its
+       `margin-top: auto` pushed the toggle of a flat switch against the bottom edge, half cut off (2026-11-17) */
+    .tile.switch .body.rowable .toggle {
         margin: 0;
     }
 }
@@ -531,6 +549,263 @@ input.level::-moz-range-thumb {
     display: none;
 }
 
+/* ---- status: read-only, its icon lights up while on (firmware 2.3.0) ---- */
+
+.tile.status .value {
+    margin-top: auto;
+    color: var(--text);
+}
+
+.tile.status.lit .value {
+    color: var(--c);
+}
+
+.tile.status .head .icon {
+    width: 1.9em;
+    height: 1.9em;
+}
+
+/* a square status: the icon big in the middle, as a lamp on a panel */
+.tile.status.square .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3cqmin;
+}
+
+.tile.status.square .head .icon {
+    width: clamp(28px, 34cqmin, 120px);
+    height: clamp(28px, 34cqmin, 120px);
+}
+
+/* ---- group: up to four values in one tile, rows when tall, columns when flat ---- */
+
+.tile.group .items {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+}
+
+.tile.group .item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4cqmin;
+    min-width: 0;
+    padding: 1.5cqmin 0;
+    border-top: 1px solid color-mix(in srgb, var(--track) 70%, transparent);
+}
+
+.tile.group .item:first-child {
+    border-top: 0;
+}
+
+.tile.group .item .name {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--muted);
+    font-size: clamp(11px, min(calc(32cqh / var(--n, 1)), 10cqw), 30px);
+}
+
+.tile.group .item .value {
+    flex: none;
+    color: var(--text);
+    font-size: clamp(14px, min(calc(46cqh / var(--n, 1)), 15cqw), 72px);
+}
+
+/* flat: the values side by side, the name above each */
+@container (min-aspect-ratio: 9 / 5) {
+    .tile.group .items {
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .tile.group .item {
+        flex: 1 1 0;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 1cqh;
+        padding: 0 3cqw;
+        border-top: 0;
+        border-left: 1px solid color-mix(in srgb, var(--track) 70%, transparent);
+    }
+
+    .tile.group .item:first-child {
+        border-left: 0;
+        padding-left: 0;
+    }
+
+    .tile.group .item .name {
+        max-width: 100%;
+        font-size: clamp(11px, 18cqh, 28px);
+    }
+
+    .tile.group .item .value {
+        font-size: clamp(14px, min(32cqh, calc(30cqw / var(--n, 1))), 80px);
+    }
+}
+
+/* ---- level and battery: a picture of the tank or the battery, the numbers next to it ---- */
+
+.gaugeRow {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: stretch;
+    gap: 7cqmin;
+}
+
+.gaugeRow .readout {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 1cqmin;
+}
+
+.gaugeRow .value {
+    font-size: clamp(16px, 24cqmin, 110px);
+}
+
+/* the charge of a battery is white, its fill green; a colour of the adapter colours both */
+.tile.battery:not(.colored) .gaugeRow .value {
+    color: var(--text);
+}
+
+.gaugeRow .amount {
+    font-size: clamp(12px, 12cqmin, 44px);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--muted);
+}
+
+.gaugeRow .amount .unit {
+    margin-left: 0.25em;
+}
+
+.tank {
+    position: relative;
+    flex: none;
+    width: clamp(22px, 24cqmin, 110px);
+    border: max(2px, 1.4cqmin) solid var(--muted);
+    border-radius: clamp(5px, 4cqmin, 16px);
+    background: var(--track);
+    overflow: hidden;
+}
+
+.tank > i {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0;
+    background: var(--c);
+    transition: height 0.4s;
+}
+
+.tank > b {
+    position: absolute;
+    left: 0;
+    width: 32%;
+    height: max(1px, 0.8cqmin);
+    background: var(--text);
+    opacity: 0.55;
+}
+
+.batt {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    align-self: center;
+    height: clamp(24px, 30cqh, 140px);
+}
+
+.batt .cell {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    padding: max(2px, 1.3cqmin);
+    border: max(2px, 1.6cqmin) solid var(--muted);
+    border-radius: clamp(4px, 3.5cqmin, 14px);
+}
+
+.batt .cell > i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: clamp(2px, 2cqmin, 9px);
+    background: var(--c);
+    transition: width 0.4s;
+}
+
+.batt .cap {
+    flex: none;
+    width: max(3px, 2.4cqmin);
+    height: 38%;
+    margin-left: max(1px, 0.6cqmin);
+    border-radius: 0 3px 3px 0;
+    background: var(--muted);
+}
+
+.batt .bolt {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: auto;
+    height: 72%;
+    fill: var(--text);
+    filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.7));
+    display: none;
+}
+
+.batt .bolt.on {
+    display: block;
+}
+
+/* a battery in a tall tile: the battery across the width, the numbers below it */
+@container (max-aspect-ratio: 11 / 10) {
+    .tile.battery .gaugeRow {
+        flex-direction: column;
+        gap: 4cqmin;
+    }
+
+    .tile.battery .batt {
+        flex: none;
+        width: 100%;
+        height: clamp(24px, 24cqw, 120px);
+    }
+
+    .tile.battery .readout {
+        flex: none;
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 4cqmin;
+    }
+}
+
+/* flat level and battery: smaller numbers, the head one line */
+@container (min-aspect-ratio: 9 / 5) {
+    .gaugeRow .value {
+        font-size: clamp(14px, min(36cqh, 12cqw), 90px);
+    }
+
+    .gaugeRow .amount {
+        font-size: clamp(11px, 20cqh, 36px);
+    }
+
+    .tile.battery .batt {
+        flex: 0 0 38%;
+        height: 60%;
+    }
+}
+
 #notice {
     position: fixed;
     inset: auto 0 calc(env(safe-area-inset-bottom) + 16px);
@@ -649,4 +924,280 @@ input.level::-moz-range-thumb {
 
 .keys button.blank {
     visibility: hidden;
+}
+
+/* ---- the tiles only a tablet draws: map, flow, trend, camera ---- */
+
+.body.flush {
+    padding: 0;
+    gap: 0;
+}
+
+.body.flush > .head {
+    flex: none;
+    padding: 4cqmin 6cqmin 3cqmin;
+}
+
+.map,
+.camera {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: #0b0f13;
+}
+
+/* a finger on the map pans and zooms it, it never turns the page */
+.map {
+    touch-action: none;
+    cursor: grab;
+}
+
+.map .layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.map .layer img {
+    position: absolute;
+    max-width: none;
+    user-select: none;
+}
+
+.map canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.mapEmpty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--text);
+    font-size: clamp(12px, 6cqmin, 24px);
+    text-shadow: 0 1px 3px #000;
+    pointer-events: none;
+}
+
+.mapChip {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(16, 20, 24, 0.85);
+    color: var(--text);
+    font-size: clamp(11px, 5cqmin, 20px);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+.mapChip.hidden,
+.head .speed.hidden {
+    display: none;
+}
+
+.head .speed {
+    margin-left: auto;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.mapButtons {
+    position: absolute;
+    right: 8px;
+    bottom: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mapButton {
+    width: clamp(30px, 10cqmin, 48px);
+    height: clamp(30px, 10cqmin, 48px);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(16, 20, 24, 0.85);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+}
+
+.mapButton .icon {
+    width: 60%;
+    height: 60%;
+}
+
+.mapButton.on {
+    color: var(--c);
+}
+
+.map .credit {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 1px 5px;
+    border-top-left-radius: 4px;
+    background: rgba(255, 255, 255, 0.75);
+    color: #333;
+    font-size: 10px;
+    pointer-events: none;
+}
+
+/* a small map has no room for its buttons: it still pans and pinches */
+@container (max-width: 180px) {
+    .mapButtons {
+        display: none;
+    }
+}
+
+.tile.flow svg.flow {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+.flowNode {
+    fill: var(--bg);
+    stroke-width: 2;
+}
+
+.flowMid {
+    fill: var(--tile-on);
+    stroke: var(--muted);
+    stroke-width: 1.5;
+}
+
+.flowIcon {
+    fill: var(--muted);
+}
+
+.flowLine {
+    stroke-width: 2;
+    opacity: 0.55;
+    fill: none;
+}
+
+.flowLine.idle {
+    opacity: 1;
+}
+
+.flowPower {
+    fill: var(--text);
+    font-weight: 600;
+    text-anchor: middle;
+    font-variant-numeric: tabular-nums;
+}
+
+.flowName {
+    fill: var(--muted);
+    text-anchor: middle;
+}
+
+.tile.trend .legend {
+    display: flex;
+    gap: 0.9em;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 0.85em;
+}
+
+.tile.trend .legend .serie {
+    display: flex;
+    gap: 0.3em;
+    align-items: baseline;
+    color: var(--text);
+}
+
+.tile.trend .legend .name {
+    color: var(--muted);
+}
+
+.tile.trend .chips {
+    display: flex;
+    flex: none;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.tile.trend .chip {
+    padding: 2px 8px;
+    border: 1px solid var(--track);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.8em;
+}
+
+.tile.trend .chip.on {
+    border-color: var(--c);
+    background: var(--c);
+    color: #fff;
+}
+
+.tile.trend canvas.trend {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    touch-action: none;
+}
+
+.camera img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.camera .off {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--muted);
+    font-size: clamp(11px, 7cqmin, 22px);
+}
+
+.camera .off[hidden] {
+    display: none;
+}
+
+.camera .off .icon {
+    width: 2.2em;
+    height: 2.2em;
+}
+
+#camFull {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    background: #000;
+}
+
+#camFull[hidden] {
+    display: none;
+}
+
+#camFull img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.mapEmpty[hidden] {
+    display: none;
 }
