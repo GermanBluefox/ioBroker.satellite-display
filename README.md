@@ -303,6 +303,11 @@ Older changes: [CHANGELOG_OLD.md](CHANGELOG_OLD.md)
     ### **WORK IN PROGRESS**
 -->
 
+### **WORK IN PROGRESS**
+
+- (GermanBluefox) Declared `common.supportedMessages.help`, so AI agents (e.g. ioBroker.pi-agent) know that the instance
+  answers the message `help` with the description of its messages
+
 ### 0.4.1 (2026-11-17)
 
 - (GermanBluefox) "Pair a tablet" (tab Tablets and Device Manager): a one-time QR code that the ioBroker Visu app scans;

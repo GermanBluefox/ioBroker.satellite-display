@@ -150,7 +150,8 @@
         "compact": true,
         "supportedMessages": {
             "custom": true,
-            "deviceManager": true
+            "deviceManager": true,
+            "help": true
         },
         "connectionType": "local",
         "dataSource": "push",
